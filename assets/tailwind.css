@@ -1,0 +1,11 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: system-ui, -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  --color-accent: #4f46e5;
+  --color-accent-soft: #eef2ff;
+}
+
+html {
+  color-scheme: light;
+}
