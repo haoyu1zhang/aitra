@@ -1,5 +1,7 @@
 # Aitra
 
+[![ci](https://github.com/haoyu1zhang/aitra/actions/workflows/ci.yml/badge.svg)](https://github.com/haoyu1zhang/aitra/actions/workflows/ci.yml)
+
 Aitra 是一个 Chrome / Edge 划词翻译扩展。在网页上选中一段文字，旁边会出现一个小按钮，点一下就在选区附近弹出原文和译文。也可以按 `Alt+T`，或者用右键菜单里的“翻译选中内容”。它不会改动页面本身的内容和排版。
 
 翻译服务可以用 DeepSeek、OpenAI 或其他 OpenAI 兼容接口，也可以用 DeepL。没有 API Key 时默认用 Mock 模式，在本地生成模拟译文，整个流程照样能演示。
@@ -36,7 +38,7 @@ Aitra 是一个 Chrome / Edge 划词翻译扩展。在网页上选中一段文�
 需要 Node.js 20 或更高版本。
 
 ```bash
-git clone <your-repo-url> aitra
+git clone https://github.com/haoyu1zhang/aitra.git
 cd aitra
 npm install
 npm run build
@@ -175,3 +177,7 @@ tests/                 Vitest 单元测试
 - 可选的 Ollama 本地模型
 - 卡片的深色模式
 - Playwright 端到端测试并接入 CI
+
+## License
+
+[MIT](LICENSE)
