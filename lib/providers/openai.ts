@@ -111,7 +111,7 @@ export class OpenAICompatibleProvider implements TranslationProvider {
     await throwForStatus(res);
 
     const translated = stream && res.body
-      ? await this.readStream(res.body, options.onChunk!)
+      ? await this.readStream(res.body, options.onChunk!, options.onActivity)
       : await this.readJson(res);
 
     const clean = translated.trim();
@@ -131,10 +131,16 @@ export class OpenAICompatibleProvider implements TranslationProvider {
     return parsed.data.choices[0]?.message.content ?? '';
   }
 
-  private async readStream(body: ReadableStream<Uint8Array>, onChunk: (delta: string) => void): Promise<string> {
+  private async readStream(
+    body: ReadableStream<Uint8Array>,
+    onChunk: (delta: string) => void,
+    onActivity?: () => void,
+  ): Promise<string> {
     let full = '';
     let started = false;
     for await (const data of readSse(body)) {
+      // Reasoning tokens and keep-alives still mean the server is working.
+      onActivity?.();
       if (data === '[DONE]') break;
       let json: unknown;
       try {

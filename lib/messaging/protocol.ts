@@ -19,6 +19,7 @@ export const translateDataSchema = z.object({
   provider: z.string(),
   cached: z.boolean(),
   elapsedMs: z.number(),
+  firstChunkMs: z.number().optional(),
 });
 export type TranslateData = z.infer<typeof translateDataSchema>;
 

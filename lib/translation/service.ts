@@ -63,6 +63,7 @@ export async function translateText(
   const provider = options.provider ?? createProvider(settings);
   const timeouts = options.timeouts ?? DEFAULT_TIMEOUTS;
   let streamed = false;
+  let firstChunkAt: number | undefined;
 
   const result = await withRetry(
     async () => {
@@ -71,10 +72,12 @@ export async function translateText(
         return await provider.translate(text, {
           targetLang,
           signal: deadline.signal,
+          onActivity: () => deadline.progress(),
           onChunk: options.onChunk
             ? (delta) => {
                 deadline.progress();
                 streamed = true;
+                firstChunkAt ??= Date.now();
                 options.onChunk!(delta);
               }
             : undefined,
@@ -95,6 +98,9 @@ export async function translateText(
       signal: options.signal,
       // Once text is on screen a retry would duplicate it.
       canRetry: () => !streamed,
+      onRetry: (error, attempt) => {
+        console.warn(`[aitra] attempt ${attempt + 1} failed with ${error.code}, retrying`);
+      },
     },
   );
 
@@ -115,5 +121,6 @@ export async function translateText(
     provider: label,
     cached: false,
     elapsedMs: Date.now() - started,
+    firstChunkMs: firstChunkAt === undefined ? undefined : firstChunkAt - started,
   };
 }

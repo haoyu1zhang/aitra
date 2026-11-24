@@ -66,6 +66,26 @@ describe('translateText', () => {
     })).rejects.toMatchObject({ code: 'TIMEOUT' });
   });
 
+  it('keeps waiting while the server shows activity', async () => {
+    const { provider } = fakeProvider(async (_t, o) => {
+      for (let i = 0; i < 4; i++) {
+        await new Promise((r) => setTimeout(r, 15));
+        o.onActivity?.();
+      }
+      o.onChunk?.('好');
+      return { text: '好' };
+    });
+    const data = await translateText('hello', DEFAULT_SETTINGS, {
+      signal: signal(),
+      provider,
+      retries: 0,
+      onChunk: () => {},
+      timeouts: { firstResponseMs: 30, totalMs: 1000 },
+    });
+    expect(data.translated).toBe('好');
+    expect(data.firstChunkMs).toBeGreaterThanOrEqual(50);
+  });
+
   it('retries a network error and then succeeds', async () => {
     let calls = 0;
     const { provider } = fakeProvider(async () => {

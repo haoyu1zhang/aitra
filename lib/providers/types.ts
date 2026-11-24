@@ -3,6 +3,8 @@ export interface TranslateOptions {
   signal: AbortSignal;
   /** Called with each new piece of text when the provider can stream. */
   onChunk?: (delta: string) => void;
+  /** Called whenever anything arrives from the server, even data we skip. */
+  onActivity?: () => void;
 }
 
 export interface TranslateResult {

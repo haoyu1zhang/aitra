@@ -346,7 +346,7 @@ function Card(props: {
 
       <div className="flex items-center justify-between border-t border-slate-100 px-3 py-1.5">
         <span className="truncate text-[11px] text-slate-400">
-          {view.data ? `${view.data.provider} · ${view.data.elapsedMs} ms` : busy ? '翻译中…' : ''}
+          {view.data ? `${view.data.provider} · ${timing(view.data)}` : busy ? '翻译中…' : ''}
         </span>
         <div className="flex shrink-0 gap-1">
           {view.phase === 'error' && view.error?.code !== 'TEXT_TOO_LONG' && (
@@ -359,6 +359,12 @@ function Card(props: {
       </div>
     </div>
   );
+}
+
+function timing(data: TranslateData): string {
+  if (data.cached) return `${data.elapsedMs} ms`;
+  if (data.firstChunkMs !== undefined) return `首字 ${data.firstChunkMs} ms · 共 ${data.elapsedMs} ms`;
+  return `${data.elapsedMs} ms`;
 }
 
 function SmallButton(props: { onClick: () => void; children: ReactNode }) {
