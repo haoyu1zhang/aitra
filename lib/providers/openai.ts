@@ -3,6 +3,8 @@ import { TranslateError } from '../errors';
 import { guessLanguage, languageName } from '../languages';
 import { throwForStatus } from './http';
 import { readSse } from './sse';
+import { THINKING_VARIANTS, ThinkStripper, orderCandidates, stripThinkBlock, thinkingCandidates, type ThinkingVariant } from './thinking';
+import { hintKey, memoryHints, type ThinkingHintStore } from '../storage/thinking-hints';
 import type { TranslateOptions, TranslateResult, TranslationProvider } from './types';
 
 export interface OpenAIConfig {
@@ -45,25 +47,13 @@ export function completionsUrl(baseUrl: string): string {
   return `${baseUrl.trim().replace(/\/+$/, '')}/chat/completions`;
 }
 
-function isOfficialDeepSeek(baseUrl: string): boolean {
-  try {
-    return new URL(baseUrl).hostname === 'api.deepseek.com';
-  } catch {
-    return false;
-  }
-}
-
-/** DeepSeek models think by default; translation doesn't need it and it adds seconds. */
-export function wantsThinkingDisabled(baseUrl: string, model: string): boolean {
-  return isOfficialDeepSeek(baseUrl) || /deepseek/i.test(model);
-}
-
 export class OpenAICompatibleProvider implements TranslationProvider {
   readonly label: string;
 
   constructor(
     private readonly config: OpenAIConfig,
     private readonly fetchImpl: typeof fetch = (...args) => fetch(...args),
+    private readonly hints: ThinkingHintStore = memoryHints(),
   ) {
     this.label = config.model;
   }
@@ -79,7 +69,7 @@ export class OpenAICompatibleProvider implements TranslationProvider {
     }
 
     const stream = Boolean(options.onChunk);
-    const body: Record<string, unknown> = {
+    const baseBody = {
       model,
       stream,
       messages: [
@@ -87,32 +77,35 @@ export class OpenAICompatibleProvider implements TranslationProvider {
         { role: 'user', content: buildUserMessage(text, options.targetLang) },
       ],
     };
-    const disableThinking = wantsThinkingDisabled(baseUrl, model);
-    if (disableThinking) body.thinking = { type: 'disabled' };
 
-    const send = () =>
-      this.fetchImpl(completionsUrl(baseUrl), {
+    const key = hintKey(baseUrl, model);
+    const remembered = await this.hints.get(key).catch(() => undefined);
+    const variants = orderCandidates(thinkingCandidates(baseUrl, model), remembered);
+
+    let res: Response | undefined;
+    let used: ThinkingVariant | undefined;
+    for (const variant of variants) {
+      res = await this.fetchImpl(completionsUrl(baseUrl), {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${apiKey}`,
           'Content-Type': 'application/json',
           Accept: stream ? 'text/event-stream' : 'application/json',
         },
-        body: JSON.stringify(body),
+        body: JSON.stringify({ ...baseBody, ...THINKING_VARIANTS[variant] }),
         signal: options.signal,
       });
-
-    let res = await send();
-    // Some proxies reject fields they don't know. Try once more without it.
-    if (res.status === 400 && disableThinking && !isOfficialDeepSeek(baseUrl)) {
-      delete body.thinking;
-      res = await send();
+      used = variant;
+      // 400/422 usually means "unknown field"; anything else is a real answer.
+      if (res.status !== 400 && res.status !== 422) break;
+      if (variant !== variants[variants.length - 1]) await res.body?.cancel().catch(() => undefined);
     }
-    await throwForStatus(res);
+    await throwForStatus(res!);
+    if (used && used !== remembered) void this.hints.set(key, used).catch(() => undefined);
 
-    const translated = stream && res.body
-      ? await this.readStream(res.body, options.onChunk!, options.onActivity)
-      : await this.readJson(res);
+    const translated = stream && res!.body
+      ? await this.readStream(res!.body, options.onChunk!, options.onActivity)
+      : await this.readJson(res!);
 
     const clean = translated.trim();
     if (!clean) throw new TranslateError('BAD_RESPONSE', '返回的译文为空');
@@ -128,7 +121,7 @@ export class OpenAICompatibleProvider implements TranslationProvider {
     }
     const parsed = completionSchema.safeParse(json);
     if (!parsed.success) throw new TranslateError('BAD_RESPONSE');
-    return parsed.data.choices[0]?.message.content ?? '';
+    return stripThinkBlock(parsed.data.choices[0]?.message.content ?? '');
   }
 
   private async readStream(
@@ -138,6 +131,19 @@ export class OpenAICompatibleProvider implements TranslationProvider {
   ): Promise<string> {
     let full = '';
     let started = false;
+    const stripper = new ThinkStripper();
+    const emit = (piece: string) => {
+      let delta = piece;
+      if (!delta) return;
+      // Models sometimes open with whitespace or a newline.
+      if (!started) {
+        delta = delta.replace(/^\s+/, '');
+        if (!delta) return;
+        started = true;
+      }
+      full += delta;
+      onChunk(delta);
+    };
     for await (const data of readSse(body)) {
       // Reasoning tokens and keep-alives still mean the server is working.
       onActivity?.();
@@ -150,17 +156,10 @@ export class OpenAICompatibleProvider implements TranslationProvider {
       }
       const parsed = chunkSchema.safeParse(json);
       if (!parsed.success) continue;
-      let delta = parsed.data.choices[0]?.delta?.content ?? '';
-      if (!delta) continue;
-      // Models sometimes open with whitespace or a newline.
-      if (!started) {
-        delta = delta.replace(/^\s+/, '');
-        if (!delta) continue;
-        started = true;
-      }
-      full += delta;
-      onChunk(delta);
+      const content = parsed.data.choices[0]?.delta?.content ?? '';
+      if (content) emit(stripper.push(content));
     }
+    emit(stripper.flush());
     return full;
   }
 }

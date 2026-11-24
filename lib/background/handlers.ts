@@ -8,10 +8,13 @@ import {
 } from '../messaging/protocol';
 import { hasEndpointPermission } from '../permissions';
 import { CACHE_MAX, cacheCount, clearCache } from '../storage/cache';
-import { getSettings, type Settings } from '../storage/settings';
+import { activeApi, getSettings, type Settings } from '../storage/settings';
 import { translateText } from '../translation/service';
 
-const checkPermission = (settings: Settings) => hasEndpointPermission(settings.openai.baseUrl);
+const checkPermission = (settings: Settings) => {
+  const api = activeApi(settings);
+  return api ? hasEndpointPermission(api.baseUrl) : Promise.resolve(true);
+};
 
 function logFailure(code: string, length: number) {
   // Never log the selected text or anything from the settings.

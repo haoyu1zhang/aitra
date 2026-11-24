@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { browser } from 'wxt/browser';
 import { LANGUAGES } from '@/lib/languages';
 import {
+  apiLabel,
   getSettings,
   providerLabel,
   updateSettings,
@@ -68,9 +69,25 @@ export function PopupApp() {
             </button>
           ))}
         </div>
-        <p className="mt-1.5 truncate text-xs text-slate-500" title={providerLabel(settings)}>
-          当前：{providerLabel(settings)}
-        </p>
+        {settings.provider === 'openai' && settings.apis.length > 1 ? (
+          <select
+            aria-label="选择 AI 接口"
+            className="mt-2 block w-full rounded-md border border-slate-300 px-2 py-1.5 text-xs"
+            value={settings.activeApiId ?? ''}
+            onChange={(e) => void patch({ activeApiId: e.target.value })}
+          >
+            {settings.apis.map((a) => (
+              <option key={a.id} value={a.id}>{apiLabel(a)}</option>
+            ))}
+          </select>
+        ) : (
+          <p className="mt-1.5 truncate text-xs text-slate-500" title={providerLabel(settings)}>
+            当前：{providerLabel(settings)}
+          </p>
+        )}
+        {settings.provider === 'openai' && settings.apis.length === 0 && (
+          <p className="mt-1 text-xs text-amber-700">还没有添加接口，请到设置页添加。</p>
+        )}
       </div>
 
       <p className="border-t border-slate-100 pt-3 text-xs leading-relaxed text-slate-500">

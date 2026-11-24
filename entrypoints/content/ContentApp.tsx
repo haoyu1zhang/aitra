@@ -1,11 +1,11 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react';
 import { browser } from 'wxt/browser';
 import type { TranslateErrorInfo } from '@/lib/errors';
 import { messageFor } from '@/lib/errors';
 import { languageLabel } from '@/lib/languages';
 import { triggerMessageSchema, type TranslateData } from '@/lib/messaging/protocol';
 import { requestTranslation } from '@/lib/messaging/translate-client';
-import { cornerPoint, isInViewport, placeButton, placeCard, type Point } from '@/lib/dom/position';
+import { clampPoint, cornerPoint, isInViewport, placeButton, placeCard, type Point } from '@/lib/dom/position';
 import { boundingRect, checkLength, normalizeText, readSelection, type Rect } from '@/lib/dom/selection';
 import { copyText } from '@/lib/dom/clipboard';
 import { DEFAULT_SETTINGS, getSettings, watchSettings, type Settings } from '@/lib/storage/settings';
@@ -230,13 +230,25 @@ function Card(props: {
   const ref = useRef<HTMLDivElement>(null);
   const [pos, setPos] = useState<Point | null>(null);
   const [copied, setCopied] = useState(false);
+  const [dragging, setDragging] = useState(false);
   const frame = useRef(0);
+  // Once the user drags the card it stays where they put it.
+  const pinned = useRef(false);
+  const dragOffset = useRef({ x: 0, y: 0 });
 
   const reposition = useCallback(() => {
     const el = ref.current;
     if (!el) return;
     const vp = viewport();
     const size = { width: el.offsetWidth, height: el.offsetHeight };
+    if (pinned.current) {
+      setPos((prev) => {
+        if (!prev) return prev;
+        const p = clampPoint(prev, size, vp);
+        return p.x === prev.x && p.y === prev.y ? prev : p;
+      });
+      return;
+    }
     if (!view.range) {
       setPos(cornerPoint(vp, size));
       return;
@@ -277,6 +289,33 @@ function Card(props: {
     };
   }, [reposition]);
 
+  const onDragStart = (e: ReactPointerEvent<HTMLDivElement>) => {
+    if (e.button !== 0 || !pos) return;
+    if ((e.target as Element).closest('button')) return;
+    // Keeps the page selection and stops text selection inside the card.
+    e.preventDefault();
+    e.currentTarget.setPointerCapture(e.pointerId);
+    dragOffset.current = { x: e.clientX - pos.x, y: e.clientY - pos.y };
+    pinned.current = true;
+    setDragging(true);
+  };
+
+  const onDragMove = (e: ReactPointerEvent<HTMLDivElement>) => {
+    if (!dragging || !ref.current) return;
+    const size = { width: ref.current.offsetWidth, height: ref.current.offsetHeight };
+    setPos(clampPoint(
+      { x: e.clientX - dragOffset.current.x, y: e.clientY - dragOffset.current.y },
+      size,
+      viewport(),
+    ));
+  };
+
+  const onDragEnd = (e: ReactPointerEvent<HTMLDivElement>) => {
+    if (!dragging) return;
+    e.currentTarget.releasePointerCapture(e.pointerId);
+    setDragging(false);
+  };
+
   const copy = async () => {
     const ok = await copyText(view.translated, props.shadow.host as HTMLElement);
     if (ok) {
@@ -296,7 +335,14 @@ function Card(props: {
       className="aitra-card fixed flex w-[360px] max-w-[calc(100vw-16px)] flex-col overflow-hidden rounded-xl border border-slate-200 bg-white text-slate-800"
       style={{ left: pos?.x ?? 0, top: pos?.y ?? 0, visibility: pos ? 'visible' : 'hidden', maxHeight: '60vh' }}
     >
-      <div className="flex items-center justify-between border-b border-slate-100 px-3 py-2">
+      <div
+        className={`flex touch-none items-center justify-between border-b border-slate-100 px-3 py-2 select-none ${dragging ? 'cursor-grabbing' : 'cursor-grab'}`}
+        title="按住拖动"
+        onPointerDown={onDragStart}
+        onPointerMove={onDragMove}
+        onPointerUp={onDragEnd}
+        onPointerCancel={onDragEnd}
+      >
         <div className="flex min-w-0 items-center gap-2 text-xs text-slate-500">
           <span className="font-semibold text-accent">Aitra</span>
           <span>→ {languageLabel(target)}</span>

@@ -3,22 +3,21 @@ import { browser } from 'wxt/browser';
 import { LANGUAGES } from '@/lib/languages';
 import {
   DEFAULT_SETTINGS,
-  OPENAI_PRESETS,
-  endpointOrigin,
+  activeApi,
   getSettings,
   providerLabel,
   saveSettings,
-  type OpenAIPreset,
   type ProviderId,
   type Settings,
 } from '@/lib/storage/settings';
-import { hasEndpointPermission, isBuiltInOrigin, requestEndpointPermission } from '@/lib/permissions';
+import { requestEndpointPermission } from '@/lib/permissions';
 import { sendRuntime } from '@/lib/messaging/client';
+import { ApiManager, SecretInput } from './ApiManager';
 import { Button, Field, NoticeLine, Section, Toggle, inputClass, type Notice } from './components';
 
 const PROVIDERS: { id: ProviderId; title: string; desc: string }[] = [
   { id: 'mock', title: 'Mock', desc: '本地模拟译文，不联网，适合演示' },
-  { id: 'openai', title: 'AI 接口', desc: 'DeepSeek、OpenAI 或任何 OpenAI 兼容接口' },
+  { id: 'openai', title: 'AI 接口', desc: '保存多个 DeepSeek、OpenAI 或兼容接口，随时切换' },
   { id: 'deepl', title: 'DeepL', desc: '专业机器翻译，免费版每月 50 万字符' },
 ];
 
@@ -27,7 +26,6 @@ export function OptionsApp() {
   const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved'>('idle');
   const [testNotice, setTestNotice] = useState<Notice>(null);
   const [testing, setTesting] = useState(false);
-  const [permitted, setPermitted] = useState(true);
   const [cacheCount, setCacheCount] = useState<number | null>(null);
   const [cacheMax, setCacheMax] = useState(500);
   const saveTimer = useRef<number | undefined>(undefined);
@@ -45,18 +43,6 @@ export function OptionsApp() {
     }
   }, []);
 
-  // Re-check permission for custom endpoints whenever the URL changes.
-  useEffect(() => {
-    if (!settings || settings.provider !== 'openai') return setPermitted(true);
-    let cancelled = false;
-    void hasEndpointPermission(settings.openai.baseUrl).then((ok) => {
-      if (!cancelled) setPermitted(ok);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [settings?.provider, settings?.openai.baseUrl]);
-
   const update = useCallback((next: Settings) => {
     setSettings(next);
     setTestNotice(null);
@@ -70,34 +56,11 @@ export function OptionsApp() {
   if (!settings) return null;
 
   const set = <K extends keyof Settings>(key: K, value: Settings[K]) => update({ ...settings, [key]: value });
-  const setOpenAI = (patch: Partial<Settings['openai']>) =>
-    update({ ...settings, openai: { ...settings.openai, ...patch } });
-
-  const choosePreset = (preset: OpenAIPreset) => {
-    const p = OPENAI_PRESETS[preset];
-    setOpenAI({
-      preset,
-      baseUrl: preset === 'custom' ? settings.openai.baseUrl : p.baseUrl,
-      model: preset === 'custom' ? settings.openai.model : p.model,
-    });
-  };
-
-  const origin = endpointOrigin(settings.openai.baseUrl);
-  const needsGrant = settings.provider === 'openai' && origin !== null && !isBuiltInOrigin(origin) && !permitted;
-
-  const grant = () => {
-    // No await before this call: Chrome only allows it inside the click.
-    void requestEndpointPermission(settings.openai.baseUrl).then((ok) => {
-      setPermitted(ok);
-      setTestNotice(ok
-        ? { tone: 'success', text: `已授权访问 ${origin}` }
-        : { tone: 'error', text: '没有获得授权，扩展无法访问这个接口。' });
-    });
-  };
-
   const runTest = () => {
     const snapshot = settings;
-    const grantFirst = needsGrant ? requestEndpointPermission(snapshot.openai.baseUrl) : Promise.resolve(true);
+    const api = snapshot.provider === 'openai' ? activeApi(snapshot) : null;
+    // Resolves right away when the origin is built in or already granted.
+    const grantFirst = api ? requestEndpointPermission(api.baseUrl) : Promise.resolve(true);
     setTesting(true);
     setTestNotice({ tone: 'info', text: '正在测试…' });
     void grantFirst
@@ -106,7 +69,6 @@ export function OptionsApp() {
           setTestNotice({ tone: 'error', text: '没有获得授权，扩展无法访问这个接口。' });
           return;
         }
-        setPermitted(true);
         const res = await sendRuntime({ type: 'provider:test', settings: snapshot });
         if (res.ok) {
           setTestNotice({
@@ -202,70 +164,7 @@ export function OptionsApp() {
             })}
           </div>
 
-          {settings.provider === 'openai' && (
-            <div className="space-y-5">
-              <Field label="服务商">
-                <div className="flex gap-2">
-                  {(Object.keys(OPENAI_PRESETS) as OpenAIPreset[]).map((key) => (
-                    <button
-                      key={key}
-                      type="button"
-                      onClick={() => choosePreset(key)}
-                      className={`rounded-md border px-3 py-1.5 text-sm ${
-                        settings.openai.preset === key
-                          ? 'border-accent bg-accent-soft text-accent'
-                          : 'border-slate-300 text-slate-600 hover:bg-slate-50'
-                      }`}
-                    >
-                      {OPENAI_PRESETS[key].label}
-                    </button>
-                  ))}
-                </div>
-              </Field>
-              <Field
-                label="接口地址（Base URL）"
-                htmlFor="baseUrl"
-                hint="请求会发到 {Base URL}/chat/completions。"
-              >
-                <input
-                  id="baseUrl"
-                  className={inputClass}
-                  value={settings.openai.baseUrl}
-                  placeholder="https://api.example.com/v1"
-                  disabled={settings.openai.preset !== 'custom'}
-                  onChange={(e) => setOpenAI({ baseUrl: e.target.value })}
-                  spellCheck={false}
-                />
-              </Field>
-              {needsGrant && (
-                <div className="flex items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">
-                  <span className="text-sm text-amber-800">需要授权扩展访问 {origin}</span>
-                  <Button onClick={grant}>授权</Button>
-                </div>
-              )}
-              <Field label="API Key" htmlFor="openaiKey" hint="只保存在本机浏览器里，不会上传到任何地方。">
-                <SecretInput
-                  id="openaiKey"
-                  value={settings.openai.apiKey}
-                  onChange={(v) => setOpenAI({ apiKey: v })}
-                />
-              </Field>
-              <Field
-                label="模型"
-                htmlFor="model"
-                hint={/deepseek/i.test(settings.openai.model) || settings.openai.preset === 'deepseek' ? 'DeepSeek 模型会自动关闭思考模式，响应更快。' : undefined}
-              >
-                <input
-                  id="model"
-                  className={inputClass}
-                  value={settings.openai.model}
-                  placeholder="model name"
-                  onChange={(e) => setOpenAI({ model: e.target.value })}
-                  spellCheck={false}
-                />
-              </Field>
-            </div>
-          )}
+          {settings.provider === 'openai' && <ApiManager settings={settings} onChange={update} />}
 
           {settings.provider === 'deepl' && (
             <Field
@@ -282,8 +181,12 @@ export function OptionsApp() {
           )}
 
           <div className="flex flex-wrap items-center gap-3">
-            <Button variant="primary" onClick={runTest} disabled={testing}>
-              {testing ? '测试中…' : '测试连接'}
+            <Button
+              variant="primary"
+              onClick={runTest}
+              disabled={testing || (settings.provider === 'openai' && !activeApi(settings))}
+            >
+              {testing ? '测试中…' : settings.provider === 'openai' ? '测试当前接口' : '测试连接'}
             </Button>
             <Button
               onClick={() => update({ ...DEFAULT_SETTINGS, targetLang: settings.targetLang })}
@@ -330,25 +233,6 @@ export function OptionsApp() {
           </p>
         </Section>
       </div>
-    </div>
-  );
-}
-
-function SecretInput(props: { id: string; value: string; onChange: (v: string) => void }) {
-  const [visible, setVisible] = useState(false);
-  return (
-    <div className="flex gap-2">
-      <input
-        id={props.id}
-        type={visible ? 'text' : 'password'}
-        className={inputClass}
-        value={props.value}
-        autoComplete="off"
-        spellCheck={false}
-        placeholder="sk-..."
-        onChange={(e) => props.onChange(e.target.value)}
-      />
-      <Button onClick={() => setVisible((v) => !v)}>{visible ? '隐藏' : '显示'}</Button>
     </div>
   );
 }

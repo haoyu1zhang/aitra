@@ -61,3 +61,11 @@ export function placeCard(
 export function cornerPoint(viewport: Size, card: Size): Point {
   return { x: Math.max(EDGE, viewport.width - card.width - 16), y: 16 };
 }
+
+/** Keeps a box of the given size fully inside the viewport. */
+export function clampPoint(p: Point, size: Size, viewport: Size): Point {
+  return {
+    x: clamp(p.x, EDGE, viewport.width - size.width - EDGE),
+    y: clamp(p.y, EDGE, viewport.height - size.height - EDGE),
+  };
+}

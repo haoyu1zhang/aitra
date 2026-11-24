@@ -5,23 +5,37 @@ import { LANG_CODES } from '../languages';
 export const PROVIDER_IDS = ['mock', 'openai', 'deepl'] as const;
 export type ProviderId = (typeof PROVIDER_IDS)[number];
 
-export const OPENAI_PRESETS = {
+/** Starting points for the "add API" form. */
+export const API_TEMPLATES = {
   deepseek: { label: 'DeepSeek', baseUrl: 'https://api.deepseek.com', model: 'deepseek-flash' },
   openai: { label: 'OpenAI', baseUrl: 'https://api.openai.com/v1', model: 'gpt-4.1-mini' },
   custom: { label: '自定义', baseUrl: '', model: '' },
 } as const;
-export type OpenAIPreset = keyof typeof OPENAI_PRESETS;
+export type ApiTemplate = keyof typeof API_TEMPLATES;
 
-const openaiSchema = z.object({
-  preset: z.enum(['deepseek', 'openai', 'custom']).catch('deepseek'),
-  baseUrl: z.string().trim().catch(OPENAI_PRESETS.deepseek.baseUrl),
-  apiKey: z.string().trim().catch(''),
-  model: z.string().trim().catch(OPENAI_PRESETS.deepseek.model),
+export const apiProfileSchema = z.object({
+  id: z.string().min(1),
+  name: z.string().trim(),
+  baseUrl: z.string().trim(),
+  apiKey: z.string().trim(),
+  model: z.string().trim(),
 });
+export type ApiProfile = z.infer<typeof apiProfileSchema>;
 
 const deeplSchema = z.object({
   apiKey: z.string().trim().catch(''),
 });
+
+// Invalid entries are dropped one by one instead of wiping the whole list.
+const apisSchema = z
+  .array(z.unknown())
+  .catch([])
+  .transform((items) =>
+    items.flatMap((item) => {
+      const parsed = apiProfileSchema.safeParse(item);
+      return parsed.success ? [parsed.data] : [];
+    }),
+  );
 
 export const settingsSchema = z.object({
   provider: z.enum(PROVIDER_IDS).catch('mock'),
@@ -29,12 +43,8 @@ export const settingsSchema = z.object({
   // Used when the selection is already in the target language.
   fallbackLang: z.enum(LANG_CODES).catch('en'),
   showButton: z.boolean().catch(true),
-  openai: openaiSchema.catch({
-    preset: 'deepseek',
-    baseUrl: OPENAI_PRESETS.deepseek.baseUrl,
-    apiKey: '',
-    model: OPENAI_PRESETS.deepseek.model,
-  }),
+  apis: apisSchema,
+  activeApiId: z.string().nullable().catch(null),
   deepl: deeplSchema.catch({ apiKey: '' }),
 });
 
@@ -45,25 +55,40 @@ export const DEFAULT_SETTINGS: Settings = {
   targetLang: 'zh-CN',
   fallbackLang: 'en',
   showButton: true,
-  openai: {
-    preset: 'deepseek',
-    baseUrl: OPENAI_PRESETS.deepseek.baseUrl,
-    apiKey: '',
-    model: OPENAI_PRESETS.deepseek.model,
-  },
+  apis: [],
+  activeApiId: null,
   deepl: { apiKey: '' },
 };
 
 const KEY = 'settings';
 
+export function newApiId(): string {
+  return `api_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+}
+
+/** 0.1.x stored a single endpoint under `openai`; turn it into a saved API. */
+function migrate(raw: Record<string, unknown>): Record<string, unknown> {
+  if (Array.isArray(raw.apis) || !raw.openai || typeof raw.openai !== 'object') return raw;
+  const old = raw.openai as Record<string, unknown>;
+  const apiKey = typeof old.apiKey === 'string' ? old.apiKey.trim() : '';
+  const baseUrl = typeof old.baseUrl === 'string' ? old.baseUrl.trim() : '';
+  const model = typeof old.model === 'string' ? old.model.trim() : '';
+  const { openai: _drop, ...rest } = raw;
+  if (!apiKey || !baseUrl) return rest;
+  const id = newApiId();
+  const host = endpointOrigin(baseUrl)?.replace(/^https?:\/\//, '') ?? '接口';
+  return { ...rest, apis: [{ id, name: host, baseUrl, apiKey, model }], activeApiId: id };
+}
+
 /** Parses anything into valid settings, falling back field by field. */
 export function parseSettings(raw: unknown): Settings {
   if (!raw || typeof raw !== 'object') return structuredClone(DEFAULT_SETTINGS);
-  const merged = {
-    ...DEFAULT_SETTINGS,
-    ...(raw as Record<string, unknown>),
-  };
-  return settingsSchema.parse(merged);
+  const merged = { ...DEFAULT_SETTINGS, ...migrate(raw as Record<string, unknown>) };
+  const parsed = settingsSchema.parse(merged);
+  if (parsed.activeApiId && !parsed.apis.some((a) => a.id === parsed.activeApiId)) {
+    parsed.activeApiId = parsed.apis[0]?.id ?? null;
+  }
+  return parsed;
 }
 
 export async function getSettings(): Promise<Settings> {
@@ -94,7 +119,11 @@ export function watchSettings(callback: (settings: Settings) => void): () => voi
   return () => browser.storage.onChanged.removeListener(listener);
 }
 
-/** Origin of the configured OpenAI-compatible endpoint, or null if invalid. */
+export function activeApi(settings: Settings): ApiProfile | null {
+  return settings.apis.find((a) => a.id === settings.activeApiId) ?? settings.apis[0] ?? null;
+}
+
+/** Origin of an OpenAI-compatible endpoint, or null if invalid. */
 export function endpointOrigin(baseUrl: string): string | null {
   try {
     const url = new URL(baseUrl);
@@ -109,14 +138,20 @@ export function endpointOrigin(baseUrl: string): string | null {
 export function providerCacheKey(settings: Settings): string {
   switch (settings.provider) {
     case 'openai': {
-      const host = endpointOrigin(settings.openai.baseUrl) ?? 'invalid';
-      return `openai:${settings.openai.model}@${host}`;
+      const api = activeApi(settings);
+      if (!api) return 'openai:none';
+      return `openai:${api.model}@${endpointOrigin(api.baseUrl) ?? 'invalid'}`;
     }
     case 'deepl':
       return 'deepl';
     case 'mock':
       return 'mock';
   }
+}
+
+export function apiLabel(api: ApiProfile): string {
+  const name = api.name || endpointOrigin(api.baseUrl)?.replace(/^https?:\/\//, '') || '未命名接口';
+  return api.model ? `${name} · ${api.model}` : name;
 }
 
 export function providerLabel(settings: Settings): string {
@@ -126,11 +161,8 @@ export function providerLabel(settings: Settings): string {
     case 'deepl':
       return 'DeepL';
     case 'openai': {
-      const preset = OPENAI_PRESETS[settings.openai.preset];
-      const name = settings.openai.preset === 'custom'
-        ? endpointOrigin(settings.openai.baseUrl) ?? '自定义接口'
-        : preset.label;
-      return settings.openai.model ? `${name} · ${settings.openai.model}` : name;
+      const api = activeApi(settings);
+      return api ? apiLabel(api) : 'AI 接口（未添加）';
     }
   }
 }

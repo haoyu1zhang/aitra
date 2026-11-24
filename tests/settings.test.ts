@@ -7,6 +7,7 @@ import {
   providerCacheKey,
   saveSettings,
   endpointOrigin,
+  activeApi,
 } from '../lib/storage/settings';
 
 describe('settings', () => {
@@ -21,8 +22,25 @@ describe('settings', () => {
     expect(parsed.provider).toBe('mock');
     expect(parsed.targetLang).toBe('ja');
     expect(parsed.showButton).toBe(true);
-    expect(parsed.openai.apiKey).toBe('');
-    expect(parsed.openai.baseUrl).toBe(DEFAULT_SETTINGS.openai.baseUrl);
+    expect(parsed.apis).toEqual([]);
+  });
+
+  it('drops broken API entries and fixes a dangling active id', () => {
+    const good = { id: 'a1', name: 'A', baseUrl: 'https://x.dev/v1', apiKey: 'k', model: 'm' };
+    const parsed = parseSettings({ apis: [good, { id: 5 }, 'junk'], activeApiId: 'gone' });
+    expect(parsed.apis).toEqual([good]);
+    expect(parsed.activeApiId).toBe('a1');
+  });
+
+  it('migrates the old single endpoint into a saved API', () => {
+    const parsed = parseSettings({
+      provider: 'openai',
+      openai: { preset: 'custom', baseUrl: 'https://api.gitapihub.win/v1', apiKey: 'sk-1', model: 'deepseek-flash' },
+    });
+    expect(parsed.apis).toHaveLength(1);
+    expect(parsed.apis[0]).toMatchObject({ name: 'api.gitapihub.win', apiKey: 'sk-1', model: 'deepseek-flash' });
+    expect(parsed.activeApiId).toBe(parsed.apis[0]!.id);
+    expect(activeApi(parsed)?.baseUrl).toBe('https://api.gitapihub.win/v1');
   });
 
   it('round-trips through storage', async () => {
@@ -33,11 +51,13 @@ describe('settings', () => {
   });
 
   it('separates cache entries by model and endpoint', () => {
-    const a = providerCacheKey({ ...DEFAULT_SETTINGS, provider: 'openai' });
+    const api = { id: 'a', name: 'A', baseUrl: 'https://x.dev/v1', apiKey: 'k', model: 'm1' };
+    const a = providerCacheKey({ ...DEFAULT_SETTINGS, provider: 'openai', apis: [api], activeApiId: 'a' });
     const b = providerCacheKey({
       ...DEFAULT_SETTINGS,
       provider: 'openai',
-      openai: { ...DEFAULT_SETTINGS.openai, model: 'other' },
+      apis: [{ ...api, model: 'm2' }],
+      activeApiId: 'a',
     });
     expect(a).not.toBe(b);
     expect(providerCacheKey(DEFAULT_SETTINGS)).toBe('mock');

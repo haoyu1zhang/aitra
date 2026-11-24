@@ -46,7 +46,8 @@ describe('translateText', () => {
     const settings: Settings = {
       ...DEFAULT_SETTINGS,
       provider: 'openai',
-      openai: { preset: 'custom', baseUrl: 'https://llm.example.com/v1', apiKey: 'k', model: 'm' },
+      apis: [{ id: 'x', name: 'x', baseUrl: 'https://llm.example.com/v1', apiKey: 'k', model: 'm' }],
+      activeApiId: 'x',
     };
     const { provider, translate } = fakeProvider(async () => ({ text: 'x' }));
     await expect(translateText('hello', settings, { signal: signal(), provider, hasPermission: async () => false }))
