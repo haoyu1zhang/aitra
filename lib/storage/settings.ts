@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from '../zod';
 import { browser } from 'wxt/browser';
 import { LANG_CODES } from '../languages';
 
@@ -7,7 +7,7 @@ export type ProviderId = (typeof PROVIDER_IDS)[number];
 
 export const OPENAI_PRESETS = {
   deepseek: { label: 'DeepSeek', baseUrl: 'https://api.deepseek.com', model: 'deepseek-flash' },
-  openai: { label: 'OpenAI', baseUrl: 'https://api.openai.com/v1', model: 'gpt-5-mini' },
+  openai: { label: 'OpenAI', baseUrl: 'https://api.openai.com/v1', model: 'gpt-4.1-mini' },
   custom: { label: '自定义', baseUrl: '', model: '' },
 } as const;
 export type OpenAIPreset = keyof typeof OPENAI_PRESETS;

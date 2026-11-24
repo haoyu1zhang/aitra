@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from '../zod';
 import { TranslateError } from '../errors';
 import { throwForStatus } from './http';
 import type { TranslateOptions, TranslateResult, TranslationProvider } from './types';

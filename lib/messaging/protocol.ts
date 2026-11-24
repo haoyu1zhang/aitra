@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from '../zod';
 import { ERROR_CODES } from '../errors';
 import { settingsSchema } from '../storage/settings';
 

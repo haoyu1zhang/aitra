@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from '../zod';
 import { browser } from 'wxt/browser';
 
 export const CACHE_MAX = 500;

@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from '../zod';
 import { TranslateError } from '../errors';
 import { guessLanguage, languageName } from '../languages';
 import { throwForStatus } from './http';
