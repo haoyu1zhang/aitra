@@ -120,7 +120,15 @@ export function ContentApp(props: { host: HTMLElement; shadow: ShadowRoot }) {
       schedule();
     };
 
+    // Touch selection (long press + handles) never fires mouseup in a useful
+    // way, so follow selectionchange while the last pointer was a finger.
+    let lastPointer = 'mouse';
+    const onSelectionChange = () => {
+      if (lastPointer === 'touch') schedule();
+    };
+
     const onPointerDown = (e: PointerEvent) => {
+      lastPointer = e.pointerType;
       if (fromOwnUi(e)) return;
       if (viewRef.current.kind !== 'idle') close();
     };
@@ -139,7 +147,9 @@ export function ContentApp(props: { host: HTMLElement; shadow: ShadowRoot }) {
     window.addEventListener('keydown', onKeyDown, true);
     window.addEventListener('scroll', onScrollOrResize, { capture: true, passive: true });
     window.addEventListener('resize', onScrollOrResize, { passive: true });
+    document.addEventListener('selectionchange', onSelectionChange);
     return () => {
+      document.removeEventListener('selectionchange', onSelectionChange);
       window.clearTimeout(debounceTimer.current);
       window.removeEventListener('mouseup', onMouseUp, true);
       window.removeEventListener('keyup', onKeyUp, true);

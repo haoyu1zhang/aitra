@@ -13,7 +13,8 @@
     "compile": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "postinstall": "wxt prepare"
+    "postinstall": "wxt prepare",
+    "build:demo": "wxt build && vite build --config demo/vite.config.ts"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.5",
@@ -23,6 +24,7 @@
     "happy-dom": "^21.0.4",
     "tailwindcss": "^4.3.5",
     "typescript": "~5.9",
+    "vite-plugin-singlefile": "^2.3.4",
     "vitest": "^5.1.0",
     "wxt": "^0.21.5"
   },

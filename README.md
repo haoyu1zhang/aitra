@@ -55,7 +55,10 @@ Edge 的步骤一样，地址是 `edge://extensions`。
 npm test          # 单元测试（Vitest）
 npm run compile   # 类型检查
 npm run zip       # 打包成可上传商店的 zip，输出在 .output/
+npm run build:demo  # 生成单文件网页演示 .output/demo/index.html
 ```
+
+`demo/` 目录是一个不用安装扩展就能试用的网页版：它用内存实现代替 `chrome.*` API，直接复用扩展的内容脚本 UI、设置页和后台逻辑，可以部署到 GitHub Pages 之类的静态托管上。演示页里只有 Mock 能出译文。
 
 ## 配置翻译服务
 
