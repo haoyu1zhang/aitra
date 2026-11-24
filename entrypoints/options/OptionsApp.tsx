@@ -111,7 +111,7 @@ export function OptionsApp() {
         if (res.ok) {
           setTestNotice({
             tone: 'success',
-            text: `连接正常，用时 ${res.data.elapsedMs} ms。“Hello, world.” → “${res.data.sample}”`,
+            text: `连接正常，用时 ${res.data.elapsedMs} ms。样句译文：${res.data.sample}`,
           });
         } else {
           setTestNotice({ tone: 'error', text: res.error.message });
@@ -253,7 +253,7 @@ export function OptionsApp() {
               <Field
                 label="模型"
                 htmlFor="model"
-                hint={settings.openai.preset === 'deepseek' ? 'DeepSeek 会自动关闭思考模式，响应更快。' : undefined}
+                hint={/deepseek/i.test(settings.openai.model) || settings.openai.preset === 'deepseek' ? 'DeepSeek 模型会自动关闭思考模式，响应更快。' : undefined}
               >
                 <input
                   id="model"

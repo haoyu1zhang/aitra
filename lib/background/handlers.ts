@@ -65,7 +65,7 @@ export async function handleRuntime(request: RuntimeRequest): Promise<RuntimeRes
     case 'provider:test': {
       const started = Date.now();
       try {
-        const data = await translateText('Hello, world.', { ...request.settings, targetLang: 'zh-CN', fallbackLang: 'en' }, {
+        const data = await translateText('The weather is nice today, so we are going for a walk.', { ...request.settings, targetLang: 'zh-CN', fallbackLang: 'en' }, {
           signal: AbortSignal.timeout(25_000),
           useCache: false,
           retries: 0,

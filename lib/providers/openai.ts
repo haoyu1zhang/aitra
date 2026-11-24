@@ -33,16 +33,29 @@ export function buildSystemPrompt(targetLang: string): string {
   ].join(' ');
 }
 
+/**
+ * The instruction is repeated in the user message because some proxies and
+ * smaller models ignore the system prompt and start chatting instead.
+ */
+export function buildUserMessage(text: string, targetLang: string): string {
+  return `Translate the following text into ${languageName(targetLang)}. Output only the translation.\n\n${text}`;
+}
+
 export function completionsUrl(baseUrl: string): string {
   return `${baseUrl.trim().replace(/\/+$/, '')}/chat/completions`;
 }
 
-function isDeepSeek(baseUrl: string): boolean {
+function isOfficialDeepSeek(baseUrl: string): boolean {
   try {
     return new URL(baseUrl).hostname === 'api.deepseek.com';
   } catch {
     return false;
   }
+}
+
+/** DeepSeek models think by default; translation doesn't need it and it adds seconds. */
+export function wantsThinkingDisabled(baseUrl: string, model: string): boolean {
+  return isOfficialDeepSeek(baseUrl) || /deepseek/i.test(model);
 }
 
 export class OpenAICompatibleProvider implements TranslationProvider {
@@ -71,22 +84,30 @@ export class OpenAICompatibleProvider implements TranslationProvider {
       stream,
       messages: [
         { role: 'system', content: buildSystemPrompt(options.targetLang) },
-        { role: 'user', content: text },
+        { role: 'user', content: buildUserMessage(text, options.targetLang) },
       ],
     };
-    // DeepSeek thinks by default; translation doesn't need it and it adds seconds.
-    if (isDeepSeek(baseUrl)) body.thinking = { type: 'disabled' };
+    const disableThinking = wantsThinkingDisabled(baseUrl, model);
+    if (disableThinking) body.thinking = { type: 'disabled' };
 
-    const res = await this.fetchImpl(completionsUrl(baseUrl), {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-        Accept: stream ? 'text/event-stream' : 'application/json',
-      },
-      body: JSON.stringify(body),
-      signal: options.signal,
-    });
+    const send = () =>
+      this.fetchImpl(completionsUrl(baseUrl), {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+          Accept: stream ? 'text/event-stream' : 'application/json',
+        },
+        body: JSON.stringify(body),
+        signal: options.signal,
+      });
+
+    let res = await send();
+    // Some proxies reject fields they don't know. Try once more without it.
+    if (res.status === 400 && disableThinking && !isOfficialDeepSeek(baseUrl)) {
+      delete body.thinking;
+      res = await send();
+    }
     await throwForStatus(res);
 
     const translated = stream && res.body

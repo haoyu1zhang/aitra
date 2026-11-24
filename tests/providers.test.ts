@@ -37,13 +37,34 @@ describe('OpenAICompatibleProvider', () => {
     const body = JSON.parse(init.body as string);
     expect(body.thinking).toEqual({ type: 'disabled' });
     expect(body.stream).toBe(false);
-    expect(body.messages[1].content).toBe('hello');
+    expect(body.messages[1].content).toMatch(/Simplified Chinese[\s\S]*\n\nhello$/);
     expect((init.headers as Record<string, string>).Authorization).toBe('Bearer sk-test-123456');
   });
 
-  it('does not send the DeepSeek flag to other hosts', async () => {
+  it('disables thinking for DeepSeek models behind a proxy', async () => {
     const fetchMock = vi.fn(async () => jsonResponse({ choices: [{ message: { content: 'x' } }] }));
-    const p = new OpenAICompatibleProvider({ ...deepseek, baseUrl: 'https://api.openai.com/v1' }, fetchMock as unknown as typeof fetch);
+    const p = new OpenAICompatibleProvider({ ...deepseek, baseUrl: 'https://proxy.example.com/v1' }, fetchMock as unknown as typeof fetch);
+    await p.translate('hello', { targetLang: 'zh-CN', signal });
+    const body = JSON.parse((fetchMock.mock.calls[0] as unknown as [string, RequestInit])[1].body as string);
+    expect(body.thinking).toEqual({ type: 'disabled' });
+  });
+
+  it('retries without the thinking flag when a proxy rejects it', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse({ error: { message: 'Unknown field: thinking' } }, 400))
+      .mockResolvedValueOnce(jsonResponse({ choices: [{ message: { content: '你好' } }] }));
+    const p = new OpenAICompatibleProvider({ ...deepseek, baseUrl: 'https://proxy.example.com/v1' }, fetchMock as unknown as typeof fetch);
+    const r = await p.translate('hello', { targetLang: 'zh-CN', signal });
+    expect(r.text).toBe('你好');
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    const second = JSON.parse((fetchMock.mock.calls[1] as unknown as [string, RequestInit])[1].body as string);
+    expect(second.thinking).toBeUndefined();
+  });
+
+  it('does not send the DeepSeek flag for other models', async () => {
+    const fetchMock = vi.fn(async () => jsonResponse({ choices: [{ message: { content: 'x' } }] }));
+    const p = new OpenAICompatibleProvider({ ...deepseek, baseUrl: 'https://api.openai.com/v1', model: 'gpt-4.1-mini' }, fetchMock as unknown as typeof fetch);
     await p.translate('hello', { targetLang: 'zh-CN', signal });
     const body = JSON.parse((fetchMock.mock.calls[0] as unknown as [string, RequestInit])[1].body as string);
     expect(body.thinking).toBeUndefined();
