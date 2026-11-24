@@ -1,3 +1,5 @@
+import { translate, type MessageKey, type Translator } from './i18n';
+
 export const ERROR_CODES = [
   'NO_API_KEY',
   'INVALID_KEY',
@@ -19,9 +21,16 @@ export type ErrorCode = (typeof ERROR_CODES)[number];
 
 export interface TranslateErrorInfo {
   code: ErrorCode;
+  /** English text for logs; the UI translates `code` instead. */
   message: string;
   retryable: boolean;
+  /** Extra detail from the provider, shown as-is. */
+  detail?: string;
+  /** Extra detail of our own, translated by the UI. */
+  detailKey?: DetailKey;
 }
+
+export type DetailKey = Extract<MessageKey, `detail.${string}`>;
 
 const RETRYABLE: ReadonlySet<ErrorCode> = new Set([
   'RATE_LIMITED',
@@ -30,41 +39,34 @@ const RETRYABLE: ReadonlySet<ErrorCode> = new Set([
   'SERVER_ERROR',
 ]);
 
-const MESSAGES: Record<ErrorCode, string> = {
-  NO_API_KEY: '还没有填写 API Key，请到设置页配置。',
-  INVALID_KEY: 'API Key 无效或没有权限，请检查设置。',
-  RATE_LIMITED: '请求太频繁，被服务方限流了，稍后再试。',
-  QUOTA_EXCEEDED: '额度已用完，请检查账户余额或套餐。',
-  TIMEOUT: '请求超时，服务方没有及时响应。',
-  NETWORK: '网络连接失败，请检查网络或接口地址。',
-  SERVER_ERROR: '翻译服务暂时出错，稍后再试。',
-  PERMISSION_DENIED: '还没有授权访问这个接口地址，请到设置页保存一次并允许授权。',
-  BAD_RESPONSE: '服务返回的数据无法识别。',
-  BAD_CONFIG: '接口配置不完整，请检查接口地址和模型名称。',
-  TEXT_TOO_LONG: '选中的文本太长了（最多 1000 个字符）。',
-  NO_RECEIVER: '当前页面无法使用划词翻译，刷新页面后再试。',
-  CANCELLED: '已取消。',
-  UNKNOWN: '翻译失败，原因未知。',
-};
-
 export class TranslateError extends Error {
   readonly code: ErrorCode;
   readonly retryable: boolean;
-  /** Extra detail from the provider, shown under the main message. */
   readonly detail?: string;
+  readonly detailKey?: DetailKey;
 
-  constructor(code: ErrorCode, detail?: string) {
-    super(MESSAGES[code]);
+  constructor(code: ErrorCode, detail?: string | { key: DetailKey }) {
+    super(translate('en', `error.${code}`));
     this.name = 'TranslateError';
     this.code = code;
     this.retryable = RETRYABLE.has(code);
-    this.detail = detail;
+    if (typeof detail === 'string') this.detail = detail;
+    else if (detail) this.detailKey = detail.key;
   }
 
   toInfo(): TranslateErrorInfo {
-    const message = this.detail ? `${this.message}（${this.detail}）` : this.message;
-    return { code: this.code, message, retryable: this.retryable };
+    const info: TranslateErrorInfo = { code: this.code, message: this.message, retryable: this.retryable };
+    if (this.detail) info.detail = this.detail;
+    if (this.detailKey) info.detailKey = this.detailKey;
+    return info;
   }
+}
+
+/** Builds the user-facing sentence for an error in the current UI language. */
+export function describeError(t: Translator, info: Pick<TranslateErrorInfo, 'code' | 'detail' | 'detailKey'>): string {
+  const message = t(`error.${info.code}`);
+  const detail = info.detailKey ? t(info.detailKey) : info.detail;
+  return detail ? t('error.withDetail', { message, detail }) : message;
 }
 
 export function errorFromStatus(status: number, detail?: string): TranslateError {
@@ -89,8 +91,4 @@ export function normalizeError(err: unknown): TranslateError {
   // fetch() rejects with a TypeError for DNS, CORS and connection failures.
   if (err instanceof TypeError) return new TranslateError('NETWORK');
   return new TranslateError('UNKNOWN');
-}
-
-export function messageFor(code: ErrorCode): string {
-  return MESSAGES[code];
 }

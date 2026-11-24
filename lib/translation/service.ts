@@ -33,7 +33,7 @@ export async function translateText(
 ): Promise<TranslateData> {
   const started = Date.now();
   const text = rawText.trim();
-  if (!text) throw new TranslateError('BAD_RESPONSE', '没有要翻译的文本');
+  if (!text) throw new TranslateError('BAD_RESPONSE', { key: 'detail.noText' });
   if (text.length > MAX_TEXT_LENGTH) throw new TranslateError('TEXT_TOO_LONG');
 
   const targetLang = resolveTarget(text, settings);

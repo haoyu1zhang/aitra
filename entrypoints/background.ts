@@ -2,8 +2,23 @@ import { browser } from 'wxt/browser';
 import { TranslateError } from '@/lib/errors';
 import { handleRuntime, handleTranslatePort } from '@/lib/background/handlers';
 import { TRANSLATE_PORT, runtimeRequestSchema, type TriggerMessage } from '@/lib/messaging/protocol';
+import { resolveUiLang, translate } from '@/lib/i18n';
+import { getSettings, watchSettings, type Settings } from '@/lib/storage/settings';
 
 const MENU_ID = 'aitra-translate-selection';
+
+function menuTitle(settings: Settings): string {
+  return translate(resolveUiLang(settings.uiLang), 'menu.translate');
+}
+
+async function refreshMenuTitle(settings?: Settings) {
+  const title = menuTitle(settings ?? (await getSettings()));
+  try {
+    await browser.contextMenus.update(MENU_ID, { title });
+  } catch {
+    // The menu doesn't exist yet; onInstalled creates it with the right title.
+  }
+}
 
 async function triggerInTab(tabId: number | undefined, message: TriggerMessage) {
   if (tabId === undefined || tabId < 0) return;
@@ -17,15 +32,15 @@ async function triggerInTab(tabId: number | undefined, message: TriggerMessage) 
 }
 
 export default defineBackground(() => {
-  browser.runtime.onInstalled.addListener(() => {
-    browser.contextMenus.removeAll(() => {
-      browser.contextMenus.create({
-        id: MENU_ID,
-        title: '翻译选中内容',
-        contexts: ['selection'],
-      });
-    });
+  browser.runtime.onInstalled.addListener(async () => {
+    const settings = await getSettings();
+    await browser.contextMenus.removeAll();
+    browser.contextMenus.create({ id: MENU_ID, title: menuTitle(settings), contexts: ['selection'] });
   });
+
+  // Keep the menu in the interface language the user picked.
+  watchSettings((settings) => void refreshMenuTitle(settings));
+  void refreshMenuTitle();
 
   browser.contextMenus.onClicked.addListener((info, tab) => {
     if (info.menuItemId !== MENU_ID) return;

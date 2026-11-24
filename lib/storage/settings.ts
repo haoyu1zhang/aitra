@@ -1,6 +1,7 @@
 import { z } from '../zod';
 import { browser } from 'wxt/browser';
 import { LANG_CODES } from '../languages';
+import { UI_LANG_SETTINGS } from '../i18n';
 
 export const PROVIDER_IDS = ['mock', 'openai', 'deepl'] as const;
 export type ProviderId = (typeof PROVIDER_IDS)[number];
@@ -9,7 +10,7 @@ export type ProviderId = (typeof PROVIDER_IDS)[number];
 export const API_TEMPLATES = {
   deepseek: { label: 'DeepSeek', baseUrl: 'https://api.deepseek.com', model: 'deepseek-flash' },
   openai: { label: 'OpenAI', baseUrl: 'https://api.openai.com/v1', model: 'gpt-4.1-mini' },
-  custom: { label: '自定义', baseUrl: '', model: '' },
+  custom: { label: 'Custom', baseUrl: '', model: '' },
 } as const;
 export type ApiTemplate = keyof typeof API_TEMPLATES;
 
@@ -43,6 +44,7 @@ export const settingsSchema = z.object({
   // Used when the selection is already in the target language.
   fallbackLang: z.enum(LANG_CODES).catch('en'),
   showButton: z.boolean().catch(true),
+  uiLang: z.enum(UI_LANG_SETTINGS).catch('auto'),
   apis: apisSchema,
   activeApiId: z.string().nullable().catch(null),
   deepl: deeplSchema.catch({ apiKey: '' }),
@@ -55,6 +57,7 @@ export const DEFAULT_SETTINGS: Settings = {
   targetLang: 'zh-CN',
   fallbackLang: 'en',
   showButton: true,
+  uiLang: 'auto',
   apis: [],
   activeApiId: null,
   deepl: { apiKey: '' },
@@ -76,7 +79,7 @@ function migrate(raw: Record<string, unknown>): Record<string, unknown> {
   const { openai: _drop, ...rest } = raw;
   if (!apiKey || !baseUrl) return rest;
   const id = newApiId();
-  const host = endpointOrigin(baseUrl)?.replace(/^https?:\/\//, '') ?? '接口';
+  const host = endpointOrigin(baseUrl)?.replace(/^https?:\/\//, '') ?? 'API';
   return { ...rest, apis: [{ id, name: host, baseUrl, apiKey, model }], activeApiId: id };
 }
 
@@ -150,19 +153,19 @@ export function providerCacheKey(settings: Settings): string {
 }
 
 export function apiLabel(api: ApiProfile): string {
-  const name = api.name || endpointOrigin(api.baseUrl)?.replace(/^https?:\/\//, '') || '未命名接口';
+  const name = api.name || endpointOrigin(api.baseUrl)?.replace(/^https?:\/\//, '') || 'API';
   return api.model ? `${name} · ${api.model}` : name;
 }
 
 export function providerLabel(settings: Settings): string {
   switch (settings.provider) {
     case 'mock':
-      return 'Mock（本地模拟）';
+      return 'Mock';
     case 'deepl':
       return 'DeepL';
     case 'openai': {
       const api = activeApi(settings);
-      return api ? apiLabel(api) : 'AI 接口（未添加）';
+      return api ? apiLabel(api) : '';
     }
   }
 }

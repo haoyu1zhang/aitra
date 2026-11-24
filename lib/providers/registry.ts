@@ -10,7 +10,7 @@ export function createProvider(settings: Settings): TranslationProvider {
   switch (settings.provider) {
     case 'openai': {
       const api = activeApi(settings);
-      if (!api) throw new TranslateError('BAD_CONFIG', '请先在设置页添加一个 AI 接口');
+      if (!api) throw new TranslateError('BAD_CONFIG', { key: 'detail.noApi' });
       return new OpenAICompatibleProvider(api, undefined, storageHints);
     }
     case 'deepl':

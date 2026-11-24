@@ -39,12 +39,12 @@ export class MockProvider implements TranslationProvider {
     const { targetLang, signal, onChunk } = options;
     await sleep(this.delayMs * 8, signal);
 
-    if (text.includes('[[fail]]')) throw new TranslateError('NETWORK', '模拟失败');
-    if (text.includes('[[ratelimit]]')) throw new TranslateError('RATE_LIMITED', '模拟限流');
+    if (text.includes('[[fail]]')) throw new TranslateError('NETWORK', { key: 'detail.mockFail' });
+    if (text.includes('[[ratelimit]]')) throw new TranslateError('RATE_LIMITED', { key: 'detail.mockFail' });
 
     const output = targetLang.startsWith('zh')
-      ? `〔模拟〕${toChinese(text)}`
-      : `〔模拟 · ${targetLang}〕${text}`;
+      ? `[Mock] ${toChinese(text)}`
+      : `[Mock · ${targetLang}] ${text}`;
 
     if (onChunk) {
       for (let i = 0; i < output.length; i += 3) {

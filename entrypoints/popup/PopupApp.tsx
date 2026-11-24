@@ -9,11 +9,13 @@ import {
   type ProviderId,
   type Settings,
 } from '@/lib/storage/settings';
+import type { MessageKey } from '@/lib/i18n';
+import { I18nProvider, useI18n } from '@/lib/i18n/react';
 
-const PROVIDER_OPTIONS: { id: ProviderId; label: string }[] = [
-  { id: 'mock', label: 'Mock' },
-  { id: 'openai', label: 'AI 接口' },
-  { id: 'deepl', label: 'DeepL' },
+const PROVIDER_OPTIONS: { id: ProviderId; label: MessageKey }[] = [
+  { id: 'mock', label: 'provider.mock.title' },
+  { id: 'openai', label: 'provider.openai.title' },
+  { id: 'deepl', label: 'provider.deepl.title' },
 ];
 
 export function PopupApp() {
@@ -25,7 +27,21 @@ export function PopupApp() {
 
   if (!settings) return <div className="h-48 w-72" />;
 
-  const patch = async (p: Partial<Settings>) => setSettings(await updateSettings(p));
+  return (
+    <I18nProvider setting={settings.uiLang}>
+      <Popup settings={settings} onChange={setSettings} />
+    </I18nProvider>
+  );
+}
+
+function Popup({ settings, onChange }: { settings: Settings; onChange: (s: Settings) => void }) {
+  const { t, lang } = useI18n();
+  const patch = async (p: Partial<Settings>) => onChange(await updateSettings(p));
+  const current = providerLabel(settings) || t('provider.none');
+
+  useEffect(() => {
+    document.documentElement.lang = lang;
+  }, [lang]);
 
   return (
     <div className="w-72 space-y-4 bg-white p-4 text-slate-800">
@@ -36,12 +52,12 @@ export function PopupApp() {
           className="text-xs text-accent hover:underline"
           onClick={() => void browser.runtime.openOptionsPage()}
         >
-          设置
+          {t('popup.settings')}
         </button>
       </div>
 
       <label className="block">
-        <span className="text-xs text-slate-500">翻译成</span>
+        <span className="text-xs text-slate-500">{t('popup.translateTo')}</span>
         <select
           className="mt-1 block w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
           value={settings.targetLang}
@@ -54,7 +70,7 @@ export function PopupApp() {
       </label>
 
       <div>
-        <span className="text-xs text-slate-500">翻译服务</span>
+        <span className="text-xs text-slate-500">{t('popup.service')}</span>
         <div className="mt-1 grid grid-cols-3 gap-1 rounded-md bg-slate-100 p-1">
           {PROVIDER_OPTIONS.map((p) => (
             <button
@@ -65,13 +81,13 @@ export function PopupApp() {
                 settings.provider === p.id ? 'bg-white font-medium text-slate-900 shadow-sm' : 'text-slate-600'
               }`}
             >
-              {p.label}
+              {t(p.label)}
             </button>
           ))}
         </div>
         {settings.provider === 'openai' && settings.apis.length > 1 ? (
           <select
-            aria-label="选择 AI 接口"
+            aria-label={t('popup.pickApi')}
             className="mt-2 block w-full rounded-md border border-slate-300 px-2 py-1.5 text-xs"
             value={settings.activeApiId ?? ''}
             onChange={(e) => void patch({ activeApiId: e.target.value })}
@@ -81,17 +97,17 @@ export function PopupApp() {
             ))}
           </select>
         ) : (
-          <p className="mt-1.5 truncate text-xs text-slate-500" title={providerLabel(settings)}>
-            当前：{providerLabel(settings)}
+          <p className="mt-1.5 truncate text-xs text-slate-500" title={current}>
+            {t('popup.current', { name: current })}
           </p>
         )}
         {settings.provider === 'openai' && settings.apis.length === 0 && (
-          <p className="mt-1 text-xs text-amber-700">还没有添加接口，请到设置页添加。</p>
+          <p className="mt-1 text-xs text-amber-700">{t('popup.noApi')}</p>
         )}
       </div>
 
       <p className="border-t border-slate-100 pt-3 text-xs leading-relaxed text-slate-500">
-        选中文本后点击浮动按钮，或按 Alt+T、右键“翻译选中内容”。选中的文本会发送给当前翻译服务。
+        {t('popup.help', { menu: t('menu.translate') })}
       </p>
     </div>
   );

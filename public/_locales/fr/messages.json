@@ -1,0 +1,8 @@
+{
+  "extDescription": {
+    "message": "Sélectionnez du texte sur n’importe quelle page et traduisez-le avec un modèle d’IA ou DeepL. Le résultat s’affiche à côté de la sélection."
+  },
+  "commandTranslate": {
+    "message": "Traduire le texte sélectionné"
+  }
+}

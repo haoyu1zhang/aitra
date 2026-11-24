@@ -1,5 +1,5 @@
 import { z } from '../zod';
-import { ERROR_CODES } from '../errors';
+import { ERROR_CODES, type DetailKey } from '../errors';
 import { settingsSchema } from '../storage/settings';
 
 export const MAX_TEXT_LENGTH = 1000;
@@ -9,6 +9,9 @@ const errorInfo = z.object({
   code: z.enum(ERROR_CODES),
   message: z.string(),
   retryable: z.boolean(),
+  detail: z.string().optional(),
+  // Checked loosely here; an unknown key just falls back to the key itself.
+  detailKey: z.custom<DetailKey>((v) => typeof v === 'string' && v.startsWith('detail.')).optional(),
 });
 
 export const translateDataSchema = z.object({

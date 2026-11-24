@@ -10,6 +10,9 @@ import {
 } from '@/lib/storage/settings';
 import { hasEndpointPermission, isBuiltInOrigin, requestEndpointPermission } from '@/lib/permissions';
 import { sendRuntime } from '@/lib/messaging/client';
+import { describeError } from '@/lib/errors';
+import type { MessageKey, Translator } from '@/lib/i18n';
+import { useI18n } from '@/lib/i18n/react';
 import { Button, Field, NoticeLine, inputClass, type Notice } from './components';
 
 interface Draft extends ApiProfile {
@@ -36,15 +39,20 @@ function templateOf(api: ApiProfile): ApiTemplate {
   return entry?.[0] ?? 'custom';
 }
 
-function validate(d: Draft): string | null {
-  if (!endpointOrigin(d.baseUrl)) return '接口地址需要以 https:// 或 http:// 开头。';
-  if (!d.apiKey) return '请填写 API Key。';
-  if (!d.model) return '请填写模型名称。';
+function validate(d: Draft): MessageKey | null {
+  if (!endpointOrigin(d.baseUrl)) return 'api.error.url';
+  if (!d.apiKey) return 'api.error.key';
+  if (!d.model) return 'api.error.model';
   return null;
+}
+
+function templateLabel(key: ApiTemplate, t: Translator): string {
+  return key === 'custom' ? t('api.template.custom') : API_TEMPLATES[key].label;
 }
 
 export function ApiManager(props: { settings: Settings; onChange: (next: Settings) => void }) {
   const { settings, onChange } = props;
+  const { t } = useI18n();
   const [draft, setDraft] = useState<Draft | null>(null);
   const [notice, setNotice] = useState<Notice>(null);
   const [busy, setBusy] = useState(false);
@@ -114,10 +122,10 @@ export function ApiManager(props: { settings: Settings; onChange: (next: Setting
   const save = () => {
     if (!draft) return;
     const problem = validate(draft);
-    if (problem) return setNotice({ tone: 'error', text: problem });
+    if (problem) return setNotice({ tone: 'error', text: t(problem) });
     const d = draft;
     void withPermission(d).then((ok) => {
-      if (!ok) return setNotice({ tone: 'error', text: '没有获得授权，扩展无法访问这个接口，所以没有保存。' });
+      if (!ok) return setNotice({ tone: 'error', text: t('api.saveDenied') });
       const profile: ApiProfile = {
         id: d.id,
         name: d.name.trim() || endpointOrigin(d.baseUrl)!.replace(/^https?:\/\//, ''),
@@ -134,28 +142,28 @@ export function ApiManager(props: { settings: Settings; onChange: (next: Setting
         activeApiId: d.isNew || !settings.activeApiId ? profile.id : settings.activeApiId,
       });
       setDraft(null);
-      setNotice({ tone: 'success', text: `已保存“${profile.name}”${d.isNew ? '，并设为当前使用的接口' : ''}。` });
+      setNotice({ tone: 'success', text: t(d.isNew ? 'api.savedActive' : 'api.saved', { name: profile.name }) });
     });
   };
 
   const test = () => {
     if (!draft) return;
     const problem = validate(draft);
-    if (problem) return setNotice({ tone: 'error', text: problem });
+    if (problem) return setNotice({ tone: 'error', text: t(problem) });
     const d = draft;
     setBusy(true);
-    setNotice({ tone: 'info', text: '正在测试…' });
+    setNotice({ tone: 'info', text: t('test.running') });
     void withPermission(d)
       .then(async (ok) => {
-        if (!ok) return setNotice({ tone: 'error', text: '没有获得授权，扩展无法访问这个接口。' });
+        if (!ok) return setNotice({ tone: 'error', text: t('test.denied') });
         const profile: ApiProfile = { id: d.id, name: d.name, baseUrl: d.baseUrl, apiKey: d.apiKey, model: d.model };
         const res = await sendRuntime({
           type: 'provider:test',
           settings: { ...settings, provider: 'openai', apis: [profile], activeApiId: profile.id },
         });
         setNotice(res.ok
-          ? { tone: 'success', text: `连接正常，用时 ${res.data.elapsedMs} ms。样句译文：${res.data.sample}` }
-          : { tone: 'error', text: res.error.message });
+          ? { tone: 'success', text: t('test.ok', { ms: res.data.elapsedMs, sample: res.data.sample }) }
+          : { tone: 'error', text: describeError(t, res.error) });
       })
       .finally(() => setBusy(false));
   };
@@ -164,13 +172,13 @@ export function ApiManager(props: { settings: Settings; onChange: (next: Setting
     <div className="space-y-4">
       {settings.apis.length === 0 && !draft && (
         <div className="rounded-lg border border-dashed border-slate-300 px-4 py-6 text-center">
-          <p className="text-sm text-slate-600">还没有添加 AI 接口。</p>
-          <p className="mt-1 text-xs text-slate-500">支持 DeepSeek、OpenAI 和任何 OpenAI 兼容接口，可以保存多个，随时切换。</p>
+          <p className="text-sm text-slate-600">{t('api.empty')}</p>
+          <p className="mt-1 text-xs text-slate-500">{t('api.empty.hint')}</p>
         </div>
       )}
 
       {settings.apis.length > 0 && (
-        <ul className="divide-y divide-slate-100 rounded-lg border border-slate-200" role="radiogroup" aria-label="已保存的接口">
+        <ul className="divide-y divide-slate-100 rounded-lg border border-slate-200" role="radiogroup" aria-label={t('api.list')}>
           {settings.apis.map((api) => {
             const active = api.id === activeId;
             return (
@@ -179,7 +187,7 @@ export function ApiManager(props: { settings: Settings; onChange: (next: Setting
                   type="button"
                   role="radio"
                   aria-checked={active}
-                  aria-label={`使用 ${api.name}`}
+                  aria-label={t('api.use', { name: api.name })}
                   onClick={() => select(api)}
                   className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border ${active ? 'border-accent' : 'border-slate-400'}`}
                 >
@@ -195,14 +203,14 @@ export function ApiManager(props: { settings: Settings; onChange: (next: Setting
                 </button>
                 {missing.has(api.id) && (
                   <button type="button" onClick={() => grant(api)} className="shrink-0 text-xs text-amber-700 underline">
-                    需要授权
+                    {t('api.needsGrant')}
                   </button>
                 )}
                 <button type="button" onClick={() => startEdit(api)} className="shrink-0 text-xs text-slate-600 hover:text-accent">
-                  编辑
+                  {t('api.edit')}
                 </button>
                 <button type="button" onClick={() => remove(api)} className="shrink-0 text-xs text-slate-500 hover:text-red-600">
-                  删除
+                  {t('api.delete')}
                 </button>
               </li>
             );
@@ -211,13 +219,13 @@ export function ApiManager(props: { settings: Settings; onChange: (next: Setting
       )}
 
       {!draft && (
-        <Button onClick={startAdd}>+ 添加接口</Button>
+        <Button onClick={startAdd}>{t('api.add')}</Button>
       )}
 
       {draft && (
         <div className="space-y-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
-          <div className="text-sm font-medium text-slate-900">{draft.isNew ? '添加接口' : '编辑接口'}</div>
-          <Field label="模板">
+          <div className="text-sm font-medium text-slate-900">{draft.isNew ? t('api.addTitle') : t('api.editTitle')}</div>
+          <Field label={t('api.template')}>
             <div className="flex flex-wrap gap-2">
               {(Object.keys(API_TEMPLATES) as ApiTemplate[]).map((key) => (
                 <button
@@ -230,21 +238,21 @@ export function ApiManager(props: { settings: Settings; onChange: (next: Setting
                       : 'border-slate-300 bg-white text-slate-600 hover:bg-slate-50'
                   }`}
                 >
-                  {API_TEMPLATES[key].label}
+                  {templateLabel(key, t)}
                 </button>
               ))}
             </div>
           </Field>
-          <Field label="名称" htmlFor="apiName" hint="只用来区分不同接口，可以留空。">
+          <Field label={t('api.name')} htmlFor="apiName" hint={t('api.name.hint')}>
             <input
               id="apiName"
               className={inputClass}
               value={draft.name}
-              placeholder="例如：DeepSeek 官方、公司中转"
+              placeholder={t('api.name.placeholder')}
               onChange={(e) => setDraft({ ...draft, name: e.target.value })}
             />
           </Field>
-          <Field label="接口地址（Base URL）" htmlFor="apiBase" hint="请求会发到 {Base URL}/chat/completions。">
+          <Field label={t('api.baseUrl')} htmlFor="apiBase" hint={t('api.baseUrl.hint')}>
             <input
               id="apiBase"
               className={inputClass}
@@ -254,10 +262,10 @@ export function ApiManager(props: { settings: Settings; onChange: (next: Setting
               onChange={(e) => setDraft({ ...draft, baseUrl: e.target.value, template: 'custom' })}
             />
           </Field>
-          <Field label="API Key" htmlFor="apiKey" hint="只保存在本机浏览器里。">
+          <Field label={t('api.key')} htmlFor="apiKey" hint={t('api.key.hint')}>
             <SecretInput id="apiKey" value={draft.apiKey} onChange={(v) => setDraft({ ...draft, apiKey: v })} />
           </Field>
-          <Field label="模型" htmlFor="apiModel" hint="翻译时会自动尝试关闭模型的推理/思考模式。">
+          <Field label={t('api.model')} htmlFor="apiModel" hint={t('api.model.hint')}>
             <input
               id="apiModel"
               className={inputClass}
@@ -268,9 +276,9 @@ export function ApiManager(props: { settings: Settings; onChange: (next: Setting
             />
           </Field>
           <div className="flex flex-wrap gap-3">
-            <Button variant="primary" onClick={save} disabled={busy}>保存</Button>
-            <Button onClick={test} disabled={busy}>{busy ? '测试中…' : '测试连接'}</Button>
-            <Button onClick={() => { setDraft(null); setNotice(null); }} disabled={busy}>取消</Button>
+            <Button variant="primary" onClick={save} disabled={busy}>{t('button.save')}</Button>
+            <Button onClick={test} disabled={busy}>{busy ? t('button.testing') : t('button.test')}</Button>
+            <Button onClick={() => { setDraft(null); setNotice(null); }} disabled={busy}>{t('button.cancel')}</Button>
           </div>
         </div>
       )}
@@ -282,6 +290,7 @@ export function ApiManager(props: { settings: Settings; onChange: (next: Setting
 
 export function SecretInput(props: { id: string; value: string; onChange: (v: string) => void }) {
   const [visible, setVisible] = useState(false);
+  const { t } = useI18n();
   return (
     <div className="flex gap-2">
       <input
@@ -294,7 +303,7 @@ export function SecretInput(props: { id: string; value: string; onChange: (v: st
         placeholder="sk-..."
         onChange={(e) => props.onChange(e.target.value)}
       />
-      <Button onClick={() => setVisible((v) => !v)}>{visible ? '隐藏' : '显示'}</Button>
+      <Button onClick={() => setVisible((v) => !v)}>{visible ? t('button.hide') : t('button.show')}</Button>
     </div>
   );
 }

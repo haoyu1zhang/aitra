@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { TranslateError, errorFromStatus, normalizeError } from '../lib/errors';
+import { TranslateError, describeError, errorFromStatus, normalizeError } from '../lib/errors';
+import { createTranslator } from '../lib/i18n';
 import { redact } from '../lib/providers/http';
 
 describe('errors', () => {
@@ -27,9 +28,15 @@ describe('errors', () => {
     expect(normalizeError('boom').code).toBe('UNKNOWN');
   });
 
-  it('includes provider detail in the message', () => {
+  it('describes errors in the UI language, with detail', () => {
     const info = new TranslateError('INVALID_KEY', 'Authentication Fails').toInfo();
-    expect(info.message).toContain('Authentication Fails');
+    expect(info.detail).toBe('Authentication Fails');
+    expect(describeError(createTranslator('en'), info)).toMatch(/invalid.*\(Authentication Fails\)$/);
+    expect(describeError(createTranslator('zh-CN'), info)).toBe('API Key 无效或没有权限，请检查设置。（Authentication Fails）');
+
+    const own = new TranslateError('BAD_CONFIG', { key: 'detail.noModel' }).toInfo();
+    expect(own.detailKey).toBe('detail.noModel');
+    expect(describeError(createTranslator('de'), own)).toContain('kein Modellname');
   });
 
   it('redacts things that look like keys', () => {

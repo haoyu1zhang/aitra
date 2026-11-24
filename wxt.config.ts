@@ -8,7 +8,8 @@ export default defineConfig({
   }),
   manifest: {
     name: 'Aitra',
-    description: '划词翻译：选中网页文本即可用 AI 模型或 DeepL 翻译，结果显示在选区旁边。',
+    description: '__MSG_extDescription__',
+    default_locale: 'en',
     permissions: ['storage', 'contextMenus'],
     host_permissions: [
       'https://api.deepseek.com/*',
@@ -22,7 +23,7 @@ export default defineConfig({
     commands: {
       'translate-selection': {
         suggested_key: { default: 'Alt+T' },
-        description: '翻译当前选中的文本',
+        description: '__MSG_commandTranslate__',
       },
     },
   },

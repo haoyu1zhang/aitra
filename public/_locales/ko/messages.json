@@ -1,0 +1,8 @@
+{
+  "extDescription": {
+    "message": "페이지에서 텍스트를 선택하면 AI 모델이나 DeepL로 번역해 선택한 곳 바로 옆에 보여 줍니다."
+  },
+  "commandTranslate": {
+    "message": "선택한 텍스트 번역"
+  }
+}

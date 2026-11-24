@@ -1,0 +1,8 @@
+{
+  "extDescription": {
+    "message": "Text auf jeder Seite markieren und mit einem KI-Modell oder DeepL übersetzen. Das Ergebnis erscheint direkt neben der Auswahl."
+  },
+  "commandTranslate": {
+    "message": "Markierten Text übersetzen"
+  }
+}

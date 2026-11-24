@@ -1,0 +1,8 @@
+{
+  "extDescription": {
+    "message": "ページの文字を選ぶだけで、AI モデルや DeepL で翻訳。訳文は選んだ文字のすぐ横に表示されます。"
+  },
+  "commandTranslate": {
+    "message": "選んだ文字を翻訳"
+  }
+}

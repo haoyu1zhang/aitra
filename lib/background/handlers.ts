@@ -42,7 +42,7 @@ export function handleTranslatePort(port: Browser.runtime.Port) {
   port.onMessage.addListener(async (raw: unknown) => {
     const parsed = portRequestSchema.safeParse(raw);
     if (!parsed.success) {
-      send({ type: 'error', error: new TranslateError('BAD_RESPONSE', '请求格式不正确').toInfo() });
+      send({ type: 'error', error: new TranslateError('BAD_RESPONSE', { key: 'detail.badRequest' }).toInfo() });
       return;
     }
     const { text } = parsed.data;

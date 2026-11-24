@@ -44,7 +44,7 @@ export function requestTranslation(text: string, handlers: TranslateHandlers): (
     port = browser.runtime.connect({ name: TRANSLATE_PORT });
   } catch {
     // Happens after the extension is reloaded while the page stays open.
-    fail({ code: 'NO_RECEIVER', message: '扩展已更新，请刷新页面后再试。', retryable: false });
+    fail(new TranslateError('NO_RECEIVER', { key: 'detail.reloadPage' }).toInfo());
     return () => {};
   }
 
@@ -68,7 +68,7 @@ export function requestTranslation(text: string, handlers: TranslateHandlers): (
   });
 
   port.onDisconnect.addListener(() => {
-    fail({ code: 'NO_RECEIVER', message: '和扩展后台的连接断开了，请重试。', retryable: true });
+    fail({ ...new TranslateError('NO_RECEIVER', { key: 'detail.portClosed' }).toInfo(), retryable: true });
   });
 
   resetIdle();

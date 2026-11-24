@@ -61,11 +61,11 @@ export class OpenAICompatibleProvider implements TranslationProvider {
   async translate(text: string, options: TranslateOptions): Promise<TranslateResult> {
     const { baseUrl, apiKey, model } = this.config;
     if (!apiKey) throw new TranslateError('NO_API_KEY');
-    if (!model) throw new TranslateError('BAD_CONFIG', '没有填写模型名称');
+    if (!model) throw new TranslateError('BAD_CONFIG', { key: 'detail.noModel' });
     try {
       new URL(baseUrl);
     } catch {
-      throw new TranslateError('BAD_CONFIG', '接口地址格式不正确');
+      throw new TranslateError('BAD_CONFIG', { key: 'detail.badUrl' });
     }
 
     const stream = Boolean(options.onChunk);
@@ -108,7 +108,7 @@ export class OpenAICompatibleProvider implements TranslationProvider {
       : await this.readJson(res!);
 
     const clean = translated.trim();
-    if (!clean) throw new TranslateError('BAD_RESPONSE', '返回的译文为空');
+    if (!clean) throw new TranslateError('BAD_RESPONSE', { key: 'detail.emptyReply' });
     return { text: clean, detectedSourceLang: guessLanguage(text) };
   }
 

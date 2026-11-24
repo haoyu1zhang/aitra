@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react';
 import { browser } from 'wxt/browser';
 import type { TranslateErrorInfo } from '@/lib/errors';
-import { messageFor } from '@/lib/errors';
+import { TranslateError, describeError } from '@/lib/errors';
+import { I18nProvider, useI18n } from '@/lib/i18n/react';
 import { languageLabel } from '@/lib/languages';
+import type { Translator } from '@/lib/i18n';
 import { triggerMessageSchema, type TranslateData } from '@/lib/messaging/protocol';
 import { requestTranslation } from '@/lib/messaging/translate-client';
 import { clampPoint, cornerPoint, isInViewport, placeButton, placeCard, type Point } from '@/lib/dom/position';
@@ -33,9 +35,24 @@ function viewport() {
 }
 
 export function ContentApp(props: { host: HTMLElement; shadow: ShadowRoot }) {
-  const { host, shadow } = props;
-  const [view, setView] = useState<View>({ kind: 'idle' });
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
+
+  useEffect(() => {
+    void getSettings().then(setSettings);
+    return watchSettings(setSettings);
+  }, []);
+
+  return (
+    <I18nProvider setting={settings.uiLang}>
+      <SelectionUi {...props} settings={settings} />
+    </I18nProvider>
+  );
+}
+
+function SelectionUi(props: { host: HTMLElement; shadow: ShadowRoot; settings: Settings }) {
+  const { host, shadow, settings } = props;
+  const { t } = useI18n();
+  const [view, setView] = useState<View>({ kind: 'idle' });
   const viewRef = useRef(view);
   const settingsRef = useRef(settings);
   const cancelRef = useRef<(() => void) | null>(null);
@@ -44,11 +61,6 @@ export function ContentApp(props: { host: HTMLElement; shadow: ShadowRoot }) {
 
   viewRef.current = view;
   settingsRef.current = settings;
-
-  useEffect(() => {
-    void getSettings().then(setSettings);
-    return watchSettings(setSettings);
-  }, []);
 
   const close = useCallback(() => {
     cancelRef.current?.();
@@ -83,7 +95,7 @@ export function ContentApp(props: { host: HTMLElement; shadow: ShadowRoot }) {
       range: null,
       phase: 'error',
       translated: '',
-      error: { code, message: messageFor(code), retryable: false },
+      error: { ...new TranslateError(code).toInfo(), retryable: false },
     });
   }, []);
 
@@ -192,8 +204,8 @@ export function ContentApp(props: { host: HTMLElement; shadow: ShadowRoot }) {
     return (
       <button
         type="button"
-        title="翻译（Alt+T）"
-        aria-label="翻译选中的文本"
+        title={t('card.button')}
+        aria-label={t('card.button.aria')}
         className="aitra-button fixed flex cursor-pointer items-center justify-center rounded-lg border-0 bg-accent p-0 text-white hover:bg-indigo-700"
         style={{ left: p.x, top: p.y, width: BUTTON_SIZE.width, height: BUTTON_SIZE.height }}
         onMouseDown={(e) => e.preventDefault()}
@@ -227,6 +239,7 @@ function Card(props: {
   onRetry: () => void;
 }) {
   const { view, onClose } = props;
+  const { t } = useI18n();
   const ref = useRef<HTMLDivElement>(null);
   const [pos, setPos] = useState<Point | null>(null);
   const [copied, setCopied] = useState(false);
@@ -331,13 +344,13 @@ function Card(props: {
     <div
       ref={ref}
       role="dialog"
-      aria-label="翻译结果"
+      aria-label={t('card.dialog')}
       className="aitra-card fixed flex w-[360px] max-w-[calc(100vw-16px)] flex-col overflow-hidden rounded-xl border border-slate-200 bg-white text-slate-800"
       style={{ left: pos?.x ?? 0, top: pos?.y ?? 0, visibility: pos ? 'visible' : 'hidden', maxHeight: '60vh' }}
     >
       <div
         className={`flex touch-none items-center justify-between border-b border-slate-100 px-3 py-2 select-none ${dragging ? 'cursor-grabbing' : 'cursor-grab'}`}
-        title="按住拖动"
+        title={t('card.drag')}
         onPointerDown={onDragStart}
         onPointerMove={onDragMove}
         onPointerUp={onDragEnd}
@@ -347,12 +360,12 @@ function Card(props: {
           <span className="font-semibold text-accent">Aitra</span>
           <span>→ {languageLabel(target)}</span>
           {view.data?.cached && (
-            <span className="rounded-md bg-slate-100 px-1.5 py-px text-[11px] text-slate-500">缓存</span>
+            <span className="rounded-md bg-slate-100 px-1.5 py-px text-[11px] text-slate-500">{t('card.cached')}</span>
           )}
         </div>
         <button
           type="button"
-          aria-label="关闭"
+          aria-label={t('card.close')}
           onClick={onClose}
           className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-md border-0 bg-transparent p-0 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
         >
@@ -370,7 +383,7 @@ function Card(props: {
 
         <div className="mt-2">
           {view.phase === 'loading' && (
-            <div className="space-y-2 py-1" aria-label="翻译中">
+            <div className="space-y-2 py-1" aria-label={t('card.loading')}>
               <div className="aitra-skeleton h-3.5 w-11/12 rounded-md" />
               <div className="aitra-skeleton h-3.5 w-3/5 rounded-md" />
             </div>
@@ -384,7 +397,7 @@ function Card(props: {
           )}
           {view.phase === 'error' && view.error && (
             <p role="alert" className="m-0 rounded-lg bg-red-50 px-2.5 py-2 text-sm text-red-700">
-              {view.error.message}
+              {describeError(t, view.error)}
             </p>
           )}
         </div>
@@ -392,14 +405,14 @@ function Card(props: {
 
       <div className="flex items-center justify-between border-t border-slate-100 px-3 py-1.5">
         <span className="truncate text-[11px] text-slate-400">
-          {view.data ? `${view.data.provider} · ${timing(view.data)}` : busy ? '翻译中…' : ''}
+          {view.data ? `${view.data.provider} · ${timing(view.data, t)}` : busy ? t('card.loading') : ''}
         </span>
         <div className="flex shrink-0 gap-1">
           {view.phase === 'error' && view.error?.code !== 'TEXT_TOO_LONG' && (
-            <SmallButton onClick={props.onRetry}>重试</SmallButton>
+            <SmallButton onClick={props.onRetry}>{t('card.retry')}</SmallButton>
           )}
           {view.phase === 'done' && (
-            <SmallButton onClick={() => void copy()}>{copied ? '已复制' : '复制'}</SmallButton>
+            <SmallButton onClick={() => void copy()}>{copied ? t('card.copied') : t('card.copy')}</SmallButton>
           )}
         </div>
       </div>
@@ -407,9 +420,9 @@ function Card(props: {
   );
 }
 
-function timing(data: TranslateData): string {
+function timing(data: TranslateData, t: Translator): string {
   if (data.cached) return `${data.elapsedMs} ms`;
-  if (data.firstChunkMs !== undefined) return `首字 ${data.firstChunkMs} ms · 共 ${data.elapsedMs} ms`;
+  if (data.firstChunkMs !== undefined) return t('card.timing', { first: data.firstChunkMs, total: data.elapsedMs });
   return `${data.elapsedMs} ms`;
 }
 

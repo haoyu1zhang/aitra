@@ -1,4 +1,5 @@
 import { browser } from 'wxt/browser';
+import { TranslateError } from '../errors';
 import type { CacheStats, RuntimeRequest, RuntimeResponse, TestResult } from './protocol';
 
 type ResponseFor<T extends RuntimeRequest['type']> =
@@ -17,14 +18,14 @@ export async function sendRuntime<R extends RuntimeRequest>(
     if (!res) {
       return {
         ok: false,
-        error: { code: 'UNKNOWN', message: '后台没有响应，请重新加载扩展。', retryable: true },
+        error: new TranslateError('UNKNOWN', { key: 'detail.noBackground' }).toInfo(),
       };
     }
     return res;
   } catch {
     return {
       ok: false,
-      error: { code: 'UNKNOWN', message: '无法连接到扩展后台，请重新加载扩展。', retryable: true },
+      error: new TranslateError('UNKNOWN', { key: 'detail.noBackground' }).toInfo(),
     };
   }
 }

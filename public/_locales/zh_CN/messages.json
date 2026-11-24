@@ -1,0 +1,8 @@
+{
+  "extDescription": {
+    "message": "划词翻译：选中网页文本即可用 AI 模型或 DeepL 翻译，结果显示在选区旁边。"
+  },
+  "commandTranslate": {
+    "message": "翻译当前选中的文本"
+  }
+}
