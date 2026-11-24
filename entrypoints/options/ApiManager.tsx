@@ -162,7 +162,7 @@ export function ApiManager(props: { settings: Settings; onChange: (next: Setting
           settings: { ...settings, provider: 'openai', apis: [profile], activeApiId: profile.id },
         });
         setNotice(res.ok
-          ? { tone: 'success', text: t('test.ok', { ms: res.data.elapsedMs, sample: res.data.sample }) }
+          ? { tone: 'success', text: t('test.ok', { ms: res.data.elapsedMs }) }
           : { tone: 'error', text: describeError(t, res.error) });
       })
       .finally(() => setBusy(false));

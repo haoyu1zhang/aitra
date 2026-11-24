@@ -39,7 +39,7 @@ export const es: Messages = {
   'button.clearCache': 'Vaciar caché',
 
   'test.running': 'Probando…',
-  'test.ok': 'Conectado en {ms} ms. Traducción de prueba: {sample}',
+  'test.ok': 'Conectado en {ms} ms.',
   'test.denied': 'No se concedió el permiso, así que la extensión no puede acceder a esta API.',
 
   'privacy.sentTo': 'Al traducir, el texto seleccionado se envía al servicio actual: {name}.',

@@ -39,7 +39,7 @@ export const ja: Messages = {
   'button.clearCache': 'キャッシュを削除',
 
   'test.running': 'テスト中…',
-  'test.ok': '接続できました（{ms} ms）。サンプル訳：{sample}',
+  'test.ok': '接続できました（{ms} ms）。',
   'test.denied': '許可されなかったため、拡張機能はこの API にアクセスできません。',
 
   'privacy.sentTo': '翻訳するとき、選んだ文字は現在のサービスに送信されます：{name}。',

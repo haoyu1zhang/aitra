@@ -39,7 +39,7 @@ export const ko: Messages = {
   'button.clearCache': '캐시 지우기',
 
   'test.running': '테스트 중…',
-  'test.ok': '{ms} ms 만에 연결되었습니다. 예시 번역: {sample}',
+  'test.ok': '{ms} ms 만에 연결되었습니다.',
   'test.denied': '권한이 없어 확장 프로그램이 이 API에 접근할 수 없습니다.',
 
   'privacy.sentTo': '번역할 때 선택한 텍스트는 현재 서비스로 전송됩니다: {name}.',

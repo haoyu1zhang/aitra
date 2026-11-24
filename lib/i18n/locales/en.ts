@@ -37,7 +37,7 @@ export const en = {
   'button.clearCache': 'Clear cache',
 
   'test.running': 'Testing…',
-  'test.ok': 'Connected in {ms} ms. Sample translation: {sample}',
+  'test.ok': 'Connected in {ms} ms.',
   'test.denied': "Permission wasn't granted, so the extension can't reach this API.",
 
   'privacy.sentTo': 'When you translate, the selected text is sent to the current service: {name}.',

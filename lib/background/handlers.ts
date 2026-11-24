@@ -68,14 +68,17 @@ export async function handleRuntime(request: RuntimeRequest): Promise<RuntimeRes
     case 'provider:test': {
       const started = Date.now();
       try {
+        // Stream like a real translation and report time to the first chunk,
+        // which is what the user actually waits for on the page.
         const data = await translateText('The weather is nice today, so we are going for a walk.', { ...request.settings, targetLang: 'zh-CN', fallbackLang: 'en' }, {
           signal: AbortSignal.timeout(25_000),
           useCache: false,
           retries: 0,
           hasPermission: checkPermission,
           timeouts: { firstResponseMs: 20_000, totalMs: 20_000 },
+          onChunk: () => {},
         });
-        return { ok: true, data: { sample: data.translated, elapsedMs: Date.now() - started } };
+        return { ok: true, data: { elapsedMs: data.firstChunkMs ?? Date.now() - started } };
       } catch (err) {
         const error = normalizeError(err);
         logFailure(error.code, 0);

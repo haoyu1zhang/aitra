@@ -36,7 +36,7 @@ describe('i18n', () => {
   });
 
   it('fills placeholders', () => {
-    expect(translate('en', 'test.ok', { ms: 120, sample: '你好' })).toBe('Connected in 120 ms. Sample translation: 你好');
+    expect(translate('en', 'test.ok', { ms: 120 })).toBe('Connected in 120 ms.');
     expect(translate('fr', 'api.use', { name: 'X' })).toBe('Utiliser X');
   });
 });

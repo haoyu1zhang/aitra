@@ -39,7 +39,7 @@ export const it: Messages = {
   'button.clearCache': 'Svuota cache',
 
   'test.running': 'Prova in corso…',
-  'test.ok': 'Connesso in {ms} ms. Traduzione di prova: {sample}',
+  'test.ok': 'Connesso in {ms} ms.',
   'test.denied': "Permesso non concesso: l'estensione non può raggiungere questa API.",
 
   'privacy.sentTo': 'Quando traduci, il testo selezionato viene inviato al servizio attuale: {name}.',

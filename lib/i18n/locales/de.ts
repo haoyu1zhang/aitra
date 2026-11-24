@@ -39,7 +39,7 @@ export const de: Messages = {
   'button.clearCache': 'Cache leeren',
 
   'test.running': 'Wird getestet…',
-  'test.ok': 'Verbunden in {ms} ms. Beispielübersetzung: {sample}',
+  'test.ok': 'Verbunden in {ms} ms.',
   'test.denied': 'Die Berechtigung wurde nicht erteilt, daher kann die Erweiterung diese API nicht erreichen.',
 
   'privacy.sentTo': 'Beim Übersetzen wird der markierte Text an den aktuellen Dienst gesendet: {name}.',

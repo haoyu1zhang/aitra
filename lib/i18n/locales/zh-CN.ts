@@ -39,7 +39,7 @@ export const zhCN: Messages = {
   'button.clearCache': '清理缓存',
 
   'test.running': '正在测试…',
-  'test.ok': '连接正常，用时 {ms} ms。样句译文：{sample}',
+  'test.ok': '连接正常，用时 {ms} ms。',
   'test.denied': '没有获得授权，扩展无法访问这个接口。',
 
   'privacy.sentTo': '翻译时，你选中的文本会发送给当前服务：{name}。',

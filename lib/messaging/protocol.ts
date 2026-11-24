@@ -54,7 +54,7 @@ export type RuntimeResponse<T> =
   | { ok: false; error: z.infer<typeof errorInfo> };
 
 export interface TestResult {
-  sample: string;
+  /** Time to the first streamed chunk, or the whole request if nothing streamed. */
   elapsedMs: number;
 }
 
