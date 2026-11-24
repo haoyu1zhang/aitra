@@ -45,7 +45,7 @@ export function Button(props: {
       type={props.type ?? 'button'}
       onClick={props.onClick}
       disabled={props.disabled}
-      className={`inline-flex items-center gap-2 rounded-lg px-3.5 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed ${styles}`}
+      className={`inline-flex shrink-0 items-center gap-2 whitespace-nowrap rounded-lg px-3.5 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed ${styles}`}
     >
       {props.children}
     </button>
