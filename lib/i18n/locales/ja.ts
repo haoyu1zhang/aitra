@@ -5,6 +5,9 @@ export const ja: Messages = {
   'app.saving': '保存中…',
   'app.saved': '保存しました',
 
+  'setup.title': 'まず翻訳 API を設定してください',
+  'setup.body': 'Aitra には翻訳サービスが付属していません。下で AI API（DeepSeek・OpenAI・互換 API）か DeepL のキーを追加してください。キーはこのブラウザの中だけに保存され、選んだ文字は選択したサービスにだけ送信されます。',
+
   'section.translation': '翻訳',
   'section.service': '翻訳サービス',
   'section.cache': 'キャッシュ',
@@ -17,8 +20,6 @@ export const ja: Messages = {
   'uiLang.auto': 'ブラウザに合わせる',
   'field.showButton': '文字を選んだら翻訳ボタンを表示する',
 
-  'provider.mock.title': 'Mock',
-  'provider.mock.desc': '通信なしの擬似訳文。デモ向けです。',
   'provider.openai.title': 'AI API',
   'provider.openai.desc': 'DeepSeek・OpenAI・互換 API を複数保存して、いつでも切り替えられます。',
   'provider.deepl.title': 'DeepL',
@@ -43,7 +44,6 @@ export const ja: Messages = {
   'test.denied': '許可されなかったため、拡張機能はこの API にアクセスできません。',
 
   'privacy.sentTo': '翻訳するとき、選んだ文字は現在のサービスに送信されます：{name}。',
-  'privacy.mock': 'Mock モードはローカルで文字を作るだけで、通信は一切しません。',
 
   'cache.desc': '同じ文字・言語・サービスの組み合わせは一度だけリクエストし、結果をローカルに保存します。',
   'cache.count': '{count} / {max} 件をキャッシュ済み',
@@ -87,7 +87,6 @@ export const ja: Messages = {
   'popup.service': 'サービス',
   'popup.current': '現在：{name}',
   'popup.pickApi': 'AI API を選ぶ',
-  'popup.noApi': 'API がまだありません。設定で追加してください。',
   'popup.help': '文字を選んで浮かぶボタンを押すか、Alt+T、または右クリックの「{menu}」を使います。選んだ文字は現在のサービスに送信されます。',
 
   'card.button': '翻訳（Alt+T）',
@@ -98,10 +97,12 @@ export const ja: Messages = {
   'card.close': '閉じる',
   'card.loading': '翻訳中…',
   'card.retry': '再試行',
+  'card.openSettings': '設定を開く',
   'card.copy': 'コピー',
   'card.copied': 'コピーしました',
   'card.timing': '最初 {first} ms・合計 {total} ms',
 
+  'error.NOT_CONFIGURED': '翻訳 API がまだ設定されていません。Aitra はご自身の API キーで動くので、先に設定で追加してください。',
   'error.NO_API_KEY': 'API キーがありません。設定で追加してください。',
   'error.INVALID_KEY': 'API キーが無効か、権限がありません。設定を確認してください。',
   'error.RATE_LIMITED': 'リクエストが多すぎて制限されています。少し待ってから試してください。',
@@ -120,12 +121,10 @@ export const ja: Messages = {
 
   'detail.noModel': 'モデル名がありません',
   'detail.badUrl': 'ベース URL が正しくありません',
-  'detail.noApi': '先に設定で AI API を追加してください',
   'detail.emptyReply': '応答が空でした',
   'detail.badRequest': 'リクエストの形式が正しくありません',
   'detail.noText': '翻訳する文字がありません',
   'detail.reloadPage': '拡張機能が更新されました。ページを再読み込みしてください',
   'detail.portClosed': '拡張機能との接続が切れました。もう一度試してください',
   'detail.noBackground': '拡張機能のバックグラウンドが応答しません。拡張機能を再読み込みしてください',
-  'detail.mockFail': '擬似エラー',
 };

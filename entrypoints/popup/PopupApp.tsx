@@ -4,6 +4,7 @@ import { LANGUAGES } from '@/lib/languages';
 import {
   apiLabel,
   getSettings,
+  isConfigured,
   providerLabel,
   updateSettings,
   type ProviderId,
@@ -13,7 +14,6 @@ import type { MessageKey } from '@/lib/i18n';
 import { I18nProvider, useI18n } from '@/lib/i18n/react';
 
 const PROVIDER_OPTIONS: { id: ProviderId; label: MessageKey }[] = [
-  { id: 'mock', label: 'provider.mock.title' },
   { id: 'openai', label: 'provider.openai.title' },
   { id: 'deepl', label: 'provider.deepl.title' },
 ];
@@ -71,7 +71,7 @@ function Popup({ settings, onChange }: { settings: Settings; onChange: (s: Setti
 
       <div>
         <span className="text-xs text-slate-500">{t('popup.service')}</span>
-        <div className="mt-1 grid grid-cols-3 gap-1 rounded-md bg-slate-100 p-1">
+        <div className="mt-1 grid grid-cols-2 gap-1 rounded-md bg-slate-100 p-1">
           {PROVIDER_OPTIONS.map((p) => (
             <button
               key={p.id}
@@ -101,8 +101,17 @@ function Popup({ settings, onChange }: { settings: Settings; onChange: (s: Setti
             {t('popup.current', { name: current })}
           </p>
         )}
-        {settings.provider === 'openai' && settings.apis.length === 0 && (
-          <p className="mt-1 text-xs text-amber-700">{t('popup.noApi')}</p>
+        {!isConfigured(settings) && (
+          <div className="mt-2 rounded-md border border-amber-200 bg-amber-50 p-2">
+            <p className="text-xs leading-relaxed text-amber-800">{t('error.NOT_CONFIGURED')}</p>
+            <button
+              type="button"
+              onClick={() => void browser.runtime.openOptionsPage()}
+              className="mt-2 w-full rounded-md bg-accent px-2 py-1.5 text-xs font-medium text-white hover:bg-indigo-700"
+            >
+              {t('card.openSettings')}
+            </button>
+          </div>
         )}
       </div>
 

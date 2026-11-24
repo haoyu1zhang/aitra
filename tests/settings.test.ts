@@ -8,6 +8,7 @@ import {
   saveSettings,
   endpointOrigin,
   activeApi,
+  isConfigured,
 } from '../lib/storage/settings';
 
 describe('settings', () => {
@@ -19,7 +20,7 @@ describe('settings', () => {
 
   it('falls back field by field on bad data', () => {
     const parsed = parseSettings({ provider: 'google', targetLang: 'ja', showButton: 'yes', openai: { apiKey: 42 } });
-    expect(parsed.provider).toBe('mock');
+    expect(parsed.provider).toBe('openai');
     expect(parsed.targetLang).toBe('ja');
     expect(parsed.showButton).toBe(true);
     expect(parsed.apis).toEqual([]);
@@ -60,7 +61,20 @@ describe('settings', () => {
       activeApiId: 'a',
     });
     expect(a).not.toBe(b);
-    expect(providerCacheKey(DEFAULT_SETTINGS)).toBe('mock');
+    expect(providerCacheKey({ ...DEFAULT_SETTINGS, provider: 'deepl' })).toBe('deepl');
+  });
+
+  it('moves the removed mock provider to the AI API', () => {
+    expect(parseSettings({ provider: 'mock' }).provider).toBe('openai');
+  });
+
+  it('knows when a service is ready to use', () => {
+    expect(isConfigured(DEFAULT_SETTINGS)).toBe(false);
+    const api = { id: 'a', name: 'A', baseUrl: 'https://api.deepseek.com', apiKey: 'sk-1', model: 'deepseek-flash' };
+    expect(isConfigured({ ...DEFAULT_SETTINGS, apis: [api], activeApiId: 'a' })).toBe(true);
+    expect(isConfigured({ ...DEFAULT_SETTINGS, apis: [{ ...api, apiKey: '' }], activeApiId: 'a' })).toBe(false);
+    expect(isConfigured({ ...DEFAULT_SETTINGS, provider: 'deepl' })).toBe(false);
+    expect(isConfigured({ ...DEFAULT_SETTINGS, provider: 'deepl', deepl: { apiKey: 'x:fx' } })).toBe(true);
   });
 
   it('parses endpoint origins', () => {

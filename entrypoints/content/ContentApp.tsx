@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react';
 import { browser } from 'wxt/browser';
 import type { TranslateErrorInfo } from '@/lib/errors';
-import { TranslateError, describeError } from '@/lib/errors';
+import { SETTINGS_ERRORS, TranslateError, describeError } from '@/lib/errors';
 import { I18nProvider, useI18n } from '@/lib/i18n/react';
 import { languageLabel } from '@/lib/languages';
 import type { Translator } from '@/lib/i18n';
@@ -408,7 +408,10 @@ function Card(props: {
           {view.data ? `${view.data.provider} · ${timing(view.data, t)}` : busy ? t('card.loading') : ''}
         </span>
         <div className="flex shrink-0 gap-1">
-          {view.phase === 'error' && view.error?.code !== 'TEXT_TOO_LONG' && (
+          {view.phase === 'error' && view.error && SETTINGS_ERRORS.has(view.error.code) && (
+            <SmallButton primary onClick={openSettings}>{t('card.openSettings')}</SmallButton>
+          )}
+          {view.phase === 'error' && view.error && view.error.code !== 'TEXT_TOO_LONG' && view.error.code !== 'NOT_CONFIGURED' && (
             <SmallButton onClick={props.onRetry}>{t('card.retry')}</SmallButton>
           )}
           {view.phase === 'done' && (
@@ -426,12 +429,20 @@ function timing(data: TranslateData, t: Translator): string {
   return `${data.elapsedMs} ms`;
 }
 
-function SmallButton(props: { onClick: () => void; children: ReactNode }) {
+function openSettings() {
+  // Content scripts can't open the options page themselves.
+  browser.runtime.sendMessage({ type: 'options:open' }).catch(() => undefined);
+}
+
+function SmallButton(props: { onClick: () => void; children: ReactNode; primary?: boolean }) {
+  const look = props.primary
+    ? 'border-accent bg-accent text-white hover:bg-indigo-700'
+    : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50';
   return (
     <button
       type="button"
       onClick={props.onClick}
-      className="cursor-pointer rounded-md border border-slate-200 bg-white px-2.5 py-1 text-xs text-slate-700 hover:bg-slate-50"
+      className={`cursor-pointer rounded-md border px-2.5 py-1 text-xs ${look}`}
     >
       {props.children}
     </button>

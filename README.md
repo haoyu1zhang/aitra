@@ -4,12 +4,9 @@
 
 Aitra 是一个 Chrome / Edge 划词翻译扩展。在网页上选中一段文字，旁边会出现一个小按钮，点一下就在选区附近弹出原文和译文。也可以按 `Alt+T`，或者用右键菜单里的“翻译选中内容”。它不会改动页面本身的内容和排版。
 
-翻译服务可以用 DeepSeek、OpenAI 或其他 OpenAI 兼容接口，也可以用 DeepL。没有 API Key 时默认用 Mock 模式，在本地生成模拟译文，整个流程照样能演示。
+翻译服务可以用 DeepSeek、OpenAI 或其他 OpenAI 兼容接口，也可以用 DeepL。扩展本身不带翻译服务，需要填你自己的 API Key：装好后会自动打开设置页，没配置时划词也会提示去设置。
 
 ![翻译卡片](docs/screenshots/card.png)
-
-
-
 
 ## 功能
 
@@ -26,9 +23,9 @@ Aitra 是一个 Chrome / Edge 划词翻译扩展。在网页上选中一段文�
 - 本地缓存：按「文本 + 目标语言 + 服务/模型 + 术语表版本」的 SHA-256 作为键，最多保留 500 条，超出后删除最早的记录。设置页能看到条数，也能一键清理。
 - 出错时给出可读的提示，比如没填 Key、Key 无效、限流、额度用完、超时、网络失败等，并保留原文和重试按钮。
 
-| 浮动按钮 | 出错时 |
+| 浮动按钮 | 还没有配置接口时 |
 | --- | --- |
-| ![浮动按钮](docs/screenshots/button.png) | ![错误提示](docs/screenshots/error.png) |
+| ![浮动按钮](docs/screenshots/button.png) | ![未配置时的提示](docs/screenshots/not-configured.png) |
 
 <!-- TODO: 录一段操作 GIF 放在 docs/demo.gif -->
 
@@ -63,7 +60,7 @@ npm run zip       # 打包成可上传商店的 zip，输出在 .output/
 npm run build:demo  # 生成单文件网页演示 .output/demo/index.html
 ```
 
-`demo/` 目录是一个不用安装扩展就能试用的网页版：它用内存实现代替 `chrome.*` API，直接复用扩展的内容脚本 UI、设置页和后台逻辑，可以部署到 GitHub Pages 之类的静态托管上。演示页里只有 Mock 能出译文。
+`demo/` 目录是一个不用安装扩展就能试用的网页版：它用内存实现代替 `chrome.*` API，直接复用扩展的内容脚本 UI、设置页和后台逻辑；因为演示页不能联网，预置的 DeepSeek 接口由页面里的一个模拟服务按真实格式应答（包括流式输出），所以走的是和正式扩展完全相同的接口代码，只是译文是示意的。可以部署到 GitHub Pages 之类的静态托管上。
 
 ## 配置翻译服务
 
@@ -93,10 +90,6 @@ npm run build:demo  # 生成单文件网页演示 .output/demo/index.html
 
 设置页选“DeepL”，填 Key。免费版的 Key 以 `:fx` 结尾，会自动使用 `api-free.deepl.com`；付费版使用 `api.deepl.com`。DeepL 不支持流式输出，译文会一次性显示。
 
-### Mock
-
-默认选项。不联网，用一个很小的词表把英文“翻”成看起来像中文的文字，只用来演示流程，不是真的翻译。选中的文本里带 `[[fail]]` 时会模拟一次网络失败，可以用来看错误提示和重试按钮。
-
 ## 权限说明
 
 | 权限 | 用途 |
@@ -112,8 +105,8 @@ npm run build:demo  # 生成单文件网页演示 .output/demo/index.html
 
 ## 隐私
 
-- 默认的 Mock 模式不发出任何网络请求。
-- 切换到其他服务后，**你选中的文本会发送给当前选择的翻译服务**（DeepSeek、OpenAI、DeepL 或你填的自定义接口）。设置页和卡片底部都会显示当前用的是哪个服务。这些服务怎么处理数据，以它们各自的隐私政策为准。
+- 扩展不带内置的翻译服务，也没有自己的服务器。没有配置接口时不会发出任何翻译请求。
+- **翻译时，你选中的文本会发送给你配置的翻译服务**（DeepSeek、OpenAI、DeepL 或你填的自定义接口）。设置页和卡片底部都会显示当前用的是哪个服务。这些服务怎么处理数据，以它们各自的隐私政策为准。
 - API Key 只保存在本机浏览器的 `chrome.storage.local` 里，不会同步，也不会发给除对应服务以外的任何地方。
 - 扩展不收集使用数据，没有统计和埋点。出错时控制台只记录错误类型和文本长度，不记录选中的内容和 Key。服务方返回的错误信息里如果出现类似 Key 的字符串，会先打码再显示。
 - 翻译结果缓存在本地，可以在设置页清理。
@@ -130,7 +123,7 @@ entrypoints/
   options/             设置页
   popup/               工具栏弹窗
 lib/
-  providers/           Mock / OpenAI 兼容 / DeepL，统一实现 translate(text, options)
+  providers/           OpenAI 兼容 / DeepL，统一实现 translate(text, options)
   translation/         缓存 → 调用 → 超时 → 重试的流程
   storage/             设置（Zod 校验）和缓存
   messaging/           content 与 background 之间的消息类型

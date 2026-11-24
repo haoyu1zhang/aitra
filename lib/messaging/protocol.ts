@@ -63,6 +63,9 @@ export interface CacheStats {
   max: number;
 }
 
+// content -> background: the only message a web page context may send
+export const openOptionsSchema = z.object({ type: z.literal('options:open') });
+
 // background -> content, via tabs.sendMessage
 export const triggerMessageSchema = z.object({
   type: z.literal('trigger'),

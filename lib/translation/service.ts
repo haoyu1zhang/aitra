@@ -4,7 +4,7 @@ import { MAX_TEXT_LENGTH, type TranslateData } from '../messaging/protocol';
 import { createProvider } from '../providers/registry';
 import type { TranslationProvider } from '../providers/types';
 import { cacheKey, getCached, putCached } from '../storage/cache';
-import { providerCacheKey, providerLabel, type Settings } from '../storage/settings';
+import { isConfigured, providerCacheKey, providerLabel, type Settings } from '../storage/settings';
 import { createDeadline } from './timeout';
 import { withRetry } from './retry';
 
@@ -35,6 +35,9 @@ export async function translateText(
   const text = rawText.trim();
   if (!text) throw new TranslateError('BAD_RESPONSE', { key: 'detail.noText' });
   if (text.length > MAX_TEXT_LENGTH) throw new TranslateError('TEXT_TOO_LONG');
+
+  // There is no built-in service: the user has to bring their own API.
+  if (!options.provider && !isConfigured(settings)) throw new TranslateError('NOT_CONFIGURED');
 
   const targetLang = resolveTarget(text, settings);
   const label = providerLabel(settings);

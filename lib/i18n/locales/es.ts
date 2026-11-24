@@ -5,6 +5,9 @@ export const es: Messages = {
   'app.saving': 'Guardando…',
   'app.saved': 'Guardado',
 
+  'setup.title': 'Configura una API de traducción para empezar',
+  'setup.body': 'Aitra no incluye un servicio de traducción propio. Añade abajo una API de IA (DeepSeek, OpenAI o cualquier compatible) o una clave de DeepL. La clave se queda en este navegador y el texto seleccionado solo se envía al servicio que elijas.',
+
   'section.translation': 'Traducción',
   'section.service': 'Servicio de traducción',
   'section.cache': 'Caché',
@@ -17,8 +20,6 @@ export const es: Messages = {
   'uiLang.auto': 'Igual que el navegador',
   'field.showButton': 'Mostrar el botón de traducir al seleccionar texto',
 
-  'provider.mock.title': 'Mock',
-  'provider.mock.desc': 'Resultado simulado, sin red. Útil para demostraciones.',
   'provider.openai.title': 'API de IA',
   'provider.openai.desc': 'Guarda varias API de DeepSeek, OpenAI o compatibles y cambia cuando quieras.',
   'provider.deepl.title': 'DeepL',
@@ -43,7 +44,6 @@ export const es: Messages = {
   'test.denied': 'No se concedió el permiso, así que la extensión no puede acceder a esta API.',
 
   'privacy.sentTo': 'Al traducir, el texto seleccionado se envía al servicio actual: {name}.',
-  'privacy.mock': 'El modo Mock solo genera texto en local y no hace ninguna petición de red.',
 
   'cache.desc': 'El mismo texto, idioma y servicio solo se piden una vez. Los resultados se guardan en local.',
   'cache.count': '{count} de {max} en caché',
@@ -87,7 +87,6 @@ export const es: Messages = {
   'popup.service': 'Servicio',
   'popup.current': 'Actual: {name}',
   'popup.pickApi': 'Elegir API de IA',
-  'popup.noApi': 'Todavía no hay ninguna API. Añade una en Ajustes.',
   'popup.help': 'Selecciona texto y pulsa el botón flotante, Alt+T o el menú contextual «{menu}». El texto seleccionado se envía al servicio actual.',
 
   'card.button': 'Traducir (Alt+T)',
@@ -98,10 +97,12 @@ export const es: Messages = {
   'card.close': 'Cerrar',
   'card.loading': 'Traduciendo…',
   'card.retry': 'Reintentar',
+  'card.openSettings': 'Abrir ajustes',
   'card.copy': 'Copiar',
   'card.copied': 'Copiado',
   'card.timing': 'primero {first} ms · total {total} ms',
 
+  'error.NOT_CONFIGURED': 'Todavía no hay ninguna API de traducción configurada. Aitra usa tu propia clave de API: añádela primero en Ajustes.',
   'error.NO_API_KEY': 'Falta la clave de API. Añádela en Ajustes.',
   'error.INVALID_KEY': 'La clave de API no es válida o no tiene acceso. Revisa los ajustes.',
   'error.RATE_LIMITED': 'Demasiadas peticiones. El servicio está limitando, inténtalo en un momento.',
@@ -120,12 +121,10 @@ export const es: Messages = {
 
   'detail.noModel': 'falta el nombre del modelo',
   'detail.badUrl': 'URL base no válida',
-  'detail.noApi': 'añade antes una API de IA en Ajustes',
   'detail.emptyReply': 'la respuesta llegó vacía',
   'detail.badRequest': 'petición mal formada',
   'detail.noText': 'no hay nada que traducir',
   'detail.reloadPage': 'la extensión se actualizó, recarga la página',
   'detail.portClosed': 'se perdió la conexión con la extensión, inténtalo de nuevo',
   'detail.noBackground': 'el proceso de la extensión no respondió, vuelve a cargarla',
-  'detail.mockFail': 'fallo simulado',
 };

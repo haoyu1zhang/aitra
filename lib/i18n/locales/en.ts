@@ -3,6 +3,9 @@ export const en = {
   'app.saving': 'Saving…',
   'app.saved': 'Saved',
 
+  'setup.title': 'Set up a translation API to get started',
+  'setup.body': 'Aitra doesn\'t come with a translation service of its own. Add an AI API (DeepSeek, OpenAI or any compatible one) or a DeepL key below. Your key stays in this browser, and selected text is sent only to the service you pick.',
+
   'section.translation': 'Translation',
   'section.service': 'Translation service',
   'section.cache': 'Cache',
@@ -15,8 +18,6 @@ export const en = {
   'uiLang.auto': 'Follow the browser',
   'field.showButton': 'Show the translate button after selecting text',
 
-  'provider.mock.title': 'Mock',
-  'provider.mock.desc': 'Simulated output, no network. Handy for demos.',
   'provider.openai.title': 'AI API',
   'provider.openai.desc': 'Save several DeepSeek, OpenAI or compatible APIs and switch any time.',
   'provider.deepl.title': 'DeepL',
@@ -41,7 +42,6 @@ export const en = {
   'test.denied': "Permission wasn't granted, so the extension can't reach this API.",
 
   'privacy.sentTo': 'When you translate, the selected text is sent to the current service: {name}.',
-  'privacy.mock': 'Mock mode only generates text locally and makes no network requests.',
 
   'cache.desc': 'The same text, target language and service are requested only once. Results are stored locally.',
   'cache.count': '{count} of {max} cached',
@@ -85,7 +85,6 @@ export const en = {
   'popup.service': 'Service',
   'popup.current': 'Current: {name}',
   'popup.pickApi': 'Choose an AI API',
-  'popup.noApi': 'No API added yet. Add one in Settings.',
   'popup.help': 'Select text, then click the floating button, press Alt+T, or right-click and choose “{menu}”. The selected text is sent to the current service.',
 
   'card.button': 'Translate (Alt+T)',
@@ -96,10 +95,12 @@ export const en = {
   'card.close': 'Close',
   'card.loading': 'Translating…',
   'card.retry': 'Retry',
+  'card.openSettings': 'Open settings',
   'card.copy': 'Copy',
   'card.copied': 'Copied',
   'card.timing': 'first {first} ms · total {total} ms',
 
+  'error.NOT_CONFIGURED': 'No translation API is set up yet. Aitra uses your own API key, so add one in Settings first.',
   'error.NO_API_KEY': 'No API key yet. Add one in Settings.',
   'error.INVALID_KEY': "The API key is invalid or doesn't have access. Check your settings.",
   'error.RATE_LIMITED': 'Too many requests. The service is rate limiting, try again shortly.',
@@ -118,14 +119,12 @@ export const en = {
 
   'detail.noModel': 'no model name',
   'detail.badUrl': 'invalid Base URL',
-  'detail.noApi': 'add an AI API in Settings first',
   'detail.emptyReply': 'the reply was empty',
   'detail.badRequest': 'malformed request',
   'detail.noText': 'nothing to translate',
   'detail.reloadPage': 'the extension was updated, reload the page',
   'detail.portClosed': 'lost the connection to the extension, try again',
   'detail.noBackground': "the extension background didn't respond, reload the extension",
-  'detail.mockFail': 'simulated failure',
 } as const;
 
 export type MessageKey = keyof typeof en;

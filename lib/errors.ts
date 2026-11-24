@@ -1,6 +1,7 @@
 import { translate, type MessageKey, type Translator } from './i18n';
 
 export const ERROR_CODES = [
+  'NOT_CONFIGURED',
   'NO_API_KEY',
   'INVALID_KEY',
   'RATE_LIMITED',
@@ -61,6 +62,16 @@ export class TranslateError extends Error {
     return info;
   }
 }
+
+/** Errors the user fixes on the settings page; the card offers a link there. */
+export const SETTINGS_ERRORS: ReadonlySet<ErrorCode> = new Set([
+  'NOT_CONFIGURED',
+  'NO_API_KEY',
+  'INVALID_KEY',
+  'QUOTA_EXCEEDED',
+  'PERMISSION_DENIED',
+  'BAD_CONFIG',
+]);
 
 /** Builds the user-facing sentence for an error in the current UI language. */
 export function describeError(t: Translator, info: Pick<TranslateErrorInfo, 'code' | 'detail' | 'detailKey'>): string {

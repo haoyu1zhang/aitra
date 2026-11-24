@@ -5,6 +5,9 @@ export const zhCN: Messages = {
   'app.saving': '保存中…',
   'app.saved': '已保存',
 
+  'setup.title': '先配置一个翻译接口',
+  'setup.body': 'Aitra 本身不提供翻译服务，需要你在下面添加一个 AI 接口（DeepSeek、OpenAI 或其他兼容接口）或 DeepL Key 才能使用。Key 只保存在这个浏览器里，选中的文本只会发给你选择的服务。',
+
   'section.translation': '翻译',
   'section.service': '翻译服务',
   'section.cache': '缓存',
@@ -17,8 +20,6 @@ export const zhCN: Messages = {
   'uiLang.auto': '跟随浏览器',
   'field.showButton': '选中文本后显示翻译按钮',
 
-  'provider.mock.title': 'Mock',
-  'provider.mock.desc': '本地模拟译文，不联网，适合演示',
   'provider.openai.title': 'AI 接口',
   'provider.openai.desc': '保存多个 DeepSeek、OpenAI 或兼容接口，随时切换',
   'provider.deepl.title': 'DeepL',
@@ -43,7 +44,6 @@ export const zhCN: Messages = {
   'test.denied': '没有获得授权，扩展无法访问这个接口。',
 
   'privacy.sentTo': '翻译时，你选中的文本会发送给当前服务：{name}。',
-  'privacy.mock': 'Mock 模式只在本地生成模拟译文，不会发出任何网络请求。',
 
   'cache.desc': '同样的文本、目标语言和服务只请求一次，结果保存在本地。',
   'cache.count': '已缓存 {count} / {max} 条',
@@ -87,7 +87,6 @@ export const zhCN: Messages = {
   'popup.service': '翻译服务',
   'popup.current': '当前：{name}',
   'popup.pickApi': '选择 AI 接口',
-  'popup.noApi': '还没有添加接口，请到设置页添加。',
   'popup.help': '选中文本后点击浮动按钮，或按 Alt+T、右键“{menu}”。选中的文本会发送给当前翻译服务。',
 
   'card.button': '翻译（Alt+T）',
@@ -98,10 +97,12 @@ export const zhCN: Messages = {
   'card.close': '关闭',
   'card.loading': '翻译中…',
   'card.retry': '重试',
+  'card.openSettings': '打开设置',
   'card.copy': '复制',
   'card.copied': '已复制',
   'card.timing': '首字 {first} ms · 共 {total} ms',
 
+  'error.NOT_CONFIGURED': '还没有配置翻译接口。Aitra 使用你自己的 API Key，请先到设置页添加。',
   'error.NO_API_KEY': '还没有填写 API Key，请到设置页配置。',
   'error.INVALID_KEY': 'API Key 无效或没有权限，请检查设置。',
   'error.RATE_LIMITED': '请求太频繁，被服务方限流了，稍后再试。',
@@ -120,12 +121,10 @@ export const zhCN: Messages = {
 
   'detail.noModel': '没有填写模型名称',
   'detail.badUrl': '接口地址格式不正确',
-  'detail.noApi': '请先在设置页添加一个 AI 接口',
   'detail.emptyReply': '返回的译文为空',
   'detail.badRequest': '请求格式不正确',
   'detail.noText': '没有要翻译的文本',
   'detail.reloadPage': '扩展已更新，请刷新页面',
   'detail.portClosed': '和扩展后台的连接断开了，请重试',
   'detail.noBackground': '扩展后台没有响应，请重新加载扩展',
-  'detail.mockFail': '模拟失败',
 };

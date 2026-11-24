@@ -1,9 +1,9 @@
 import { browser } from 'wxt/browser';
 import { TranslateError } from '@/lib/errors';
 import { handleRuntime, handleTranslatePort } from '@/lib/background/handlers';
-import { TRANSLATE_PORT, runtimeRequestSchema, type TriggerMessage } from '@/lib/messaging/protocol';
+import { TRANSLATE_PORT, openOptionsSchema, runtimeRequestSchema, type TriggerMessage } from '@/lib/messaging/protocol';
 import { resolveUiLang, translate } from '@/lib/i18n';
-import { getSettings, watchSettings, type Settings } from '@/lib/storage/settings';
+import { getSettings, isConfigured, watchSettings, type Settings } from '@/lib/storage/settings';
 
 const MENU_ID = 'aitra-translate-selection';
 
@@ -32,10 +32,12 @@ async function triggerInTab(tabId: number | undefined, message: TriggerMessage) 
 }
 
 export default defineBackground(() => {
-  browser.runtime.onInstalled.addListener(async () => {
+  browser.runtime.onInstalled.addListener(async ({ reason }) => {
     const settings = await getSettings();
     await browser.contextMenus.removeAll();
     browser.contextMenus.create({ id: MENU_ID, title: menuTitle(settings), contexts: ['selection'] });
+    // Nothing works until an API is added, so start there.
+    if (reason === 'install' && !isConfigured(settings)) void browser.runtime.openOptionsPage();
   });
 
   // Keep the menu in the interface language the user picked.
@@ -61,6 +63,11 @@ export default defineBackground(() => {
   });
 
   browser.runtime.onMessage.addListener((raw: unknown, sender, sendResponse) => {
+    // The card's "Open settings" button lives in the page, so allow this one from anywhere.
+    if (openOptionsSchema.safeParse(raw).success) {
+      void browser.runtime.openOptionsPage();
+      return;
+    }
     // Settings tests and cache management only come from extension pages.
     if (!sender.url?.startsWith(browser.runtime.getURL('/'))) return;
     const parsed = runtimeRequestSchema.safeParse(raw);

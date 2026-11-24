@@ -3,7 +3,7 @@ import { browser } from 'wxt/browser';
 import { LANG_CODES } from '../languages';
 import { UI_LANG_SETTINGS } from '../i18n';
 
-export const PROVIDER_IDS = ['mock', 'openai', 'deepl'] as const;
+export const PROVIDER_IDS = ['openai', 'deepl'] as const;
 export type ProviderId = (typeof PROVIDER_IDS)[number];
 
 /** Starting points for the "add API" form. */
@@ -39,7 +39,8 @@ const apisSchema = z
   );
 
 export const settingsSchema = z.object({
-  provider: z.enum(PROVIDER_IDS).catch('mock'),
+  // Older versions had a 'mock' provider; anything unknown lands on the AI API.
+  provider: z.enum(PROVIDER_IDS).catch('openai'),
   targetLang: z.enum(LANG_CODES).catch('zh-CN'),
   // Used when the selection is already in the target language.
   fallbackLang: z.enum(LANG_CODES).catch('en'),
@@ -53,7 +54,7 @@ export const settingsSchema = z.object({
 export type Settings = z.infer<typeof settingsSchema>;
 
 export const DEFAULT_SETTINGS: Settings = {
-  provider: 'mock',
+  provider: 'openai',
   targetLang: 'zh-CN',
   fallbackLang: 'en',
   showButton: true,
@@ -122,6 +123,13 @@ export function watchSettings(callback: (settings: Settings) => void): () => voi
   return () => browser.storage.onChanged.removeListener(listener);
 }
 
+/** True once the selected service has what it needs to make a request. */
+export function isConfigured(settings: Settings): boolean {
+  if (settings.provider === 'deepl') return settings.deepl.apiKey.length > 0;
+  const api = activeApi(settings);
+  return Boolean(api && api.apiKey && api.model && endpointOrigin(api.baseUrl));
+}
+
 export function activeApi(settings: Settings): ApiProfile | null {
   return settings.apis.find((a) => a.id === settings.activeApiId) ?? settings.apis[0] ?? null;
 }
@@ -147,8 +155,6 @@ export function providerCacheKey(settings: Settings): string {
     }
     case 'deepl':
       return 'deepl';
-    case 'mock':
-      return 'mock';
   }
 }
 
@@ -159,8 +165,6 @@ export function apiLabel(api: ApiProfile): string {
 
 export function providerLabel(settings: Settings): string {
   switch (settings.provider) {
-    case 'mock':
-      return 'Mock';
     case 'deepl':
       return 'DeepL';
     case 'openai': {

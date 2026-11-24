@@ -5,6 +5,7 @@ import {
   DEFAULT_SETTINGS,
   activeApi,
   getSettings,
+  isConfigured,
   providerLabel,
   saveSettings,
   type ProviderId,
@@ -19,7 +20,6 @@ import { ApiManager, SecretInput } from './ApiManager';
 import { Button, Field, NoticeLine, Section, Toggle, inputClass, type Notice } from './components';
 
 const PROVIDERS: { id: ProviderId; title: MessageKey; desc: MessageKey }[] = [
-  { id: 'mock', title: 'provider.mock.title', desc: 'provider.mock.desc' },
   { id: 'openai', title: 'provider.openai.title', desc: 'provider.openai.desc' },
   { id: 'deepl', title: 'provider.deepl.title', desc: 'provider.deepl.desc' },
 ];
@@ -130,6 +130,13 @@ function OptionsPage(props: {
       </header>
 
       <div className="space-y-6">
+        {!isConfigured(settings) && (
+          <div role="note" className="rounded-xl border border-amber-200 bg-amber-50 px-5 py-4">
+            <h2 className="text-sm font-semibold text-amber-900">{t('setup.title')}</h2>
+            <p className="mt-1 text-sm leading-relaxed text-amber-800">{t('setup.body')}</p>
+          </div>
+        )}
+
         <Section title={t('section.translation')}>
           <div className="grid gap-5 sm:grid-cols-2">
             <Field label={t('field.targetLang')} htmlFor="target">
@@ -174,7 +181,7 @@ function OptionsPage(props: {
         </Section>
 
         <Section title={t('section.service')}>
-          <div className="grid gap-3 sm:grid-cols-3" role="radiogroup">
+          <div className="grid gap-3 sm:grid-cols-2" role="radiogroup">
             {PROVIDERS.map((p) => {
               const active = settings.provider === p.id;
               return (
@@ -211,7 +218,7 @@ function OptionsPage(props: {
             <Button
               variant="primary"
               onClick={runTest}
-              disabled={testing || (settings.provider === 'openai' && !activeApi(settings))}
+              disabled={testing || !isConfigured(settings)}
             >
               {testing ? t('button.testing') : settings.provider === 'openai' ? t('button.testCurrent') : t('button.test')}
             </Button>
@@ -226,7 +233,6 @@ function OptionsPage(props: {
 
           <p className="rounded-lg bg-slate-50 px-3 py-2 text-xs leading-relaxed text-slate-600">
             {tx('privacy.sentTo', { name: <strong>{serviceName}</strong> })}
-            {settings.provider === 'mock' && <> {t('privacy.mock')}</>}
           </p>
         </Section>
 

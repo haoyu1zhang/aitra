@@ -1,7 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { OpenAICompatibleProvider, completionsUrl } from '../lib/providers/openai';
 import { DeepLProvider, deeplEndpoint, deeplTarget } from '../lib/providers/deepl';
-import { MockProvider } from '../lib/providers/mock';
 
 const signal = new AbortController().signal;
 
@@ -124,18 +123,5 @@ describe('DeepLProvider', () => {
     const fetchMock = vi.fn(async () => jsonResponse({ message: 'Quota exceeded' }, 456));
     const p = new DeepLProvider('abc:fx', fetchMock as unknown as typeof fetch);
     await expect(p.translate('hello', { targetLang: 'zh-CN', signal })).rejects.toMatchObject({ code: 'QUOTA_EXCEEDED' });
-  });
-});
-
-describe('MockProvider', () => {
-  it('works without a key and streams', async () => {
-    const chunks: string[] = [];
-    const r = await new MockProvider(0).translate('hello world', { targetLang: 'zh-CN', signal, onChunk: (c) => chunks.push(c) });
-    expect(r.text).toContain('你好');
-    expect(chunks.join('')).toBe(r.text);
-  });
-
-  it('can simulate a failure', async () => {
-    await expect(new MockProvider(0).translate('[[fail]]', { targetLang: 'zh-CN', signal })).rejects.toMatchObject({ code: 'NETWORK' });
   });
 });

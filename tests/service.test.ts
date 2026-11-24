@@ -16,6 +16,11 @@ function fakeProvider(impl: (text: string, o: TranslateOptions) => Promise<{ tex
 describe('translateText', () => {
   beforeEach(() => fakeBrowser.reset());
 
+  it('refuses to run without a configured service', async () => {
+    await expect(translateText('hello', DEFAULT_SETTINGS, { signal: signal() }))
+      .rejects.toMatchObject({ code: 'NOT_CONFIGURED' });
+  });
+
   it('hits the cache on the second request', async () => {
     const { provider, translate } = fakeProvider(async () => ({ text: '你好' }));
     const first = await translateText('hello', DEFAULT_SETTINGS, { signal: signal(), provider });

@@ -5,6 +5,9 @@ export const de: Messages = {
   'app.saving': 'Wird gespeichert…',
   'app.saved': 'Gespeichert',
 
+  'setup.title': 'Richte zuerst eine Übersetzungs-API ein',
+  'setup.body': 'Aitra bringt keinen eigenen Übersetzungsdienst mit. Füge unten eine KI-API (DeepSeek, OpenAI oder eine kompatible) oder einen DeepL-Schlüssel hinzu. Der Schlüssel bleibt in diesem Browser, und markierter Text geht nur an den Dienst, den du auswählst.',
+
   'section.translation': 'Übersetzung',
   'section.service': 'Übersetzungsdienst',
   'section.cache': 'Cache',
@@ -17,8 +20,6 @@ export const de: Messages = {
   'uiLang.auto': 'Wie im Browser',
   'field.showButton': 'Nach dem Markieren die Übersetzen-Schaltfläche zeigen',
 
-  'provider.mock.title': 'Mock',
-  'provider.mock.desc': 'Simulierte Ausgabe ohne Netzwerk. Praktisch für Demos.',
   'provider.openai.title': 'KI-API',
   'provider.openai.desc': 'Mehrere APIs von DeepSeek, OpenAI oder kompatiblen Diensten speichern und jederzeit wechseln.',
   'provider.deepl.title': 'DeepL',
@@ -43,7 +44,6 @@ export const de: Messages = {
   'test.denied': 'Die Berechtigung wurde nicht erteilt, daher kann die Erweiterung diese API nicht erreichen.',
 
   'privacy.sentTo': 'Beim Übersetzen wird der markierte Text an den aktuellen Dienst gesendet: {name}.',
-  'privacy.mock': 'Im Mock-Modus wird der Text nur lokal erzeugt, es gibt keine Netzwerkanfragen.',
 
   'cache.desc': 'Gleicher Text, gleiche Sprache und gleicher Dienst werden nur einmal angefragt. Die Ergebnisse bleiben lokal gespeichert.',
   'cache.count': '{count} von {max} im Cache',
@@ -87,7 +87,6 @@ export const de: Messages = {
   'popup.service': 'Dienst',
   'popup.current': 'Aktuell: {name}',
   'popup.pickApi': 'KI-API wählen',
-  'popup.noApi': 'Noch keine API. Füge eine in den Einstellungen hinzu.',
   'popup.help': 'Text markieren und dann die schwebende Schaltfläche, Alt+T oder „{menu}“ im Kontextmenü verwenden. Der markierte Text wird an den aktuellen Dienst gesendet.',
 
   'card.button': 'Übersetzen (Alt+T)',
@@ -98,10 +97,12 @@ export const de: Messages = {
   'card.close': 'Schließen',
   'card.loading': 'Wird übersetzt…',
   'card.retry': 'Erneut versuchen',
+  'card.openSettings': 'Einstellungen öffnen',
   'card.copy': 'Kopieren',
   'card.copied': 'Kopiert',
   'card.timing': 'erstes Zeichen {first} ms · gesamt {total} ms',
 
+  'error.NOT_CONFIGURED': 'Es ist noch keine Übersetzungs-API eingerichtet. Aitra arbeitet mit deinem eigenen API-Schlüssel – füge zuerst einen in den Einstellungen hinzu.',
   'error.NO_API_KEY': 'Kein API-Schlüssel vorhanden. Füge einen in den Einstellungen hinzu.',
   'error.INVALID_KEY': 'Der API-Schlüssel ist ungültig oder hat keinen Zugriff. Prüfe die Einstellungen.',
   'error.RATE_LIMITED': 'Zu viele Anfragen, der Dienst bremst. Versuch es gleich noch einmal.',
@@ -120,12 +121,10 @@ export const de: Messages = {
 
   'detail.noModel': 'kein Modellname',
   'detail.badUrl': 'ungültige Basis-URL',
-  'detail.noApi': 'füge zuerst in den Einstellungen eine KI-API hinzu',
   'detail.emptyReply': 'die Antwort war leer',
   'detail.badRequest': 'fehlerhafte Anfrage',
   'detail.noText': 'nichts zu übersetzen',
   'detail.reloadPage': 'die Erweiterung wurde aktualisiert, lade die Seite neu',
   'detail.portClosed': 'Verbindung zur Erweiterung verloren, versuch es noch einmal',
   'detail.noBackground': 'die Erweiterung antwortet nicht, lade sie neu',
-  'detail.mockFail': 'simulierter Fehler',
 };

@@ -2,7 +2,7 @@
 import { backgroundSide, sendToContent, type FakePort } from './fake-chrome';
 import { StrictMode, useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import type { Browser } from 'wxt/browser';
+import { browser, type Browser } from 'wxt/browser';
 // The extension build already compiled the content script CSS; reuse it as is.
 import contentCss from '@/.output/chrome-mv3/content-scripts/content.css?raw';
 import '@/assets/tailwind.css';
@@ -10,6 +10,9 @@ import { ContentApp } from '@/entrypoints/content/ContentApp';
 import { OptionsApp } from '@/entrypoints/options/OptionsApp';
 import { handleRuntime, handleTranslatePort } from '@/lib/background/handlers';
 import { runtimeRequestSchema } from '@/lib/messaging/protocol';
+import { DEMO_API, installDemoApi } from './mock-api';
+
+installDemoApi();
 
 // Background side ------------------------------------------------------------
 backgroundSide.onConnect.addListener((port: FakePort) => {
@@ -89,9 +92,9 @@ function DemoPage() {
 
       <div className="mx-auto max-w-3xl px-5 pt-5">
         <p className="rounded-lg border border-indigo-100 bg-indigo-50 px-4 py-3 text-sm leading-relaxed text-indigo-900">
-          这个页面运行的是扩展的真实代码：浮动按钮、翻译卡片、设置页和后台的缓存、重试逻辑都是同一份。
-          浏览器扩展 API 用内存里的模拟实现代替，刷新后设置和缓存会清空。演示页不能访问外部接口，
-          所以只有 <strong>Mock</strong> 能出译文；切到 AI 接口或 DeepL 会看到网络失败的提示。
+          这个页面运行的是扩展的真实代码：浮动按钮、翻译卡片、设置页，以及后台的接口调用、流式输出、缓存和重试逻辑都是同一份。
+          区别只有两点：浏览器扩展 API 用内存里的模拟实现代替，刷新后设置会还原；演示页不能联网，所以预置的
+          <strong>DeepSeek（演示）</strong>接口由页面内的模拟服务应答，译文只是示意。正式扩展需要你填写自己的 API Key。
         </p>
       </div>
 
@@ -132,7 +135,7 @@ function Article() {
           came from the local cache instead of a new request.
         </p>
         <p className="mt-4">
-          This sentence contains [[fail]] on purpose, so the mock service returns a network error. The card keeps
+          This sentence contains [[fail]] on purpose, so the simulated API drops the connection. The card keeps
           the original text and offers a retry button.
         </p>
         <p className="mt-4 font-sans">
@@ -165,9 +168,14 @@ function Article() {
   );
 }
 
-mountContentUi();
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <DemoPage />
-  </StrictMode>,
-);
+// Start with the stand-in API already saved, as if the user had set it up.
+void browser.storage.local
+  .set({ settings: { provider: 'openai', apis: [DEMO_API], activeApiId: DEMO_API.id } })
+  .then(() => {
+    mountContentUi();
+    createRoot(document.getElementById('root')!).render(
+      <StrictMode>
+        <DemoPage />
+      </StrictMode>,
+    );
+  });

@@ -5,6 +5,9 @@ export const ko: Messages = {
   'app.saving': '저장 중…',
   'app.saved': '저장됨',
 
+  'setup.title': '먼저 번역 API를 설정하세요',
+  'setup.body': 'Aitra에는 자체 번역 서비스가 없습니다. 아래에서 AI API(DeepSeek, OpenAI 또는 호환 API)나 DeepL 키를 추가하세요. 키는 이 브라우저에만 저장되고, 선택한 텍스트는 고른 서비스로만 전송됩니다.',
+
   'section.translation': '번역',
   'section.service': '번역 서비스',
   'section.cache': '캐시',
@@ -17,8 +20,6 @@ export const ko: Messages = {
   'uiLang.auto': '브라우저 설정 따르기',
   'field.showButton': '텍스트를 선택하면 번역 버튼 표시',
 
-  'provider.mock.title': 'Mock',
-  'provider.mock.desc': '네트워크 없이 만든 가상 번역. 데모용입니다.',
   'provider.openai.title': 'AI API',
   'provider.openai.desc': 'DeepSeek, OpenAI 또는 호환 API를 여러 개 저장하고 언제든 바꿀 수 있습니다.',
   'provider.deepl.title': 'DeepL',
@@ -43,7 +44,6 @@ export const ko: Messages = {
   'test.denied': '권한이 없어 확장 프로그램이 이 API에 접근할 수 없습니다.',
 
   'privacy.sentTo': '번역할 때 선택한 텍스트는 현재 서비스로 전송됩니다: {name}.',
-  'privacy.mock': 'Mock 모드는 로컬에서만 텍스트를 만들고 네트워크 요청을 보내지 않습니다.',
 
   'cache.desc': '같은 텍스트, 언어, 서비스 조합은 한 번만 요청하고 결과를 로컬에 저장합니다.',
   'cache.count': '{max}개 중 {count}개 캐시됨',
@@ -87,7 +87,6 @@ export const ko: Messages = {
   'popup.service': '서비스',
   'popup.current': '현재: {name}',
   'popup.pickApi': 'AI API 선택',
-  'popup.noApi': '아직 API가 없습니다. 설정에서 추가하세요.',
   'popup.help': '텍스트를 선택한 뒤 떠 있는 버튼을 누르거나 Alt+T, 또는 오른쪽 클릭 메뉴의 “{menu}”를 사용하세요. 선택한 텍스트는 현재 서비스로 전송됩니다.',
 
   'card.button': '번역 (Alt+T)',
@@ -98,10 +97,12 @@ export const ko: Messages = {
   'card.close': '닫기',
   'card.loading': '번역 중…',
   'card.retry': '다시 시도',
+  'card.openSettings': '설정 열기',
   'card.copy': '복사',
   'card.copied': '복사됨',
   'card.timing': '첫 글자 {first} ms · 전체 {total} ms',
 
+  'error.NOT_CONFIGURED': '아직 번역 API가 설정되지 않았습니다. Aitra는 사용자의 API 키로 작동하므로 먼저 설정에서 추가하세요.',
   'error.NO_API_KEY': 'API 키가 없습니다. 설정에서 추가하세요.',
   'error.INVALID_KEY': 'API 키가 잘못되었거나 권한이 없습니다. 설정을 확인하세요.',
   'error.RATE_LIMITED': '요청이 너무 많아 제한되었습니다. 잠시 후 다시 시도하세요.',
@@ -120,12 +121,10 @@ export const ko: Messages = {
 
   'detail.noModel': '모델 이름이 없음',
   'detail.badUrl': '기본 URL이 올바르지 않음',
-  'detail.noApi': '먼저 설정에서 AI API를 추가하세요',
   'detail.emptyReply': '응답이 비어 있음',
   'detail.badRequest': '요청 형식이 잘못됨',
   'detail.noText': '번역할 텍스트가 없음',
   'detail.reloadPage': '확장 프로그램이 업데이트되었습니다. 페이지를 새로고침하세요',
   'detail.portClosed': '확장 프로그램과 연결이 끊겼습니다. 다시 시도하세요',
   'detail.noBackground': '확장 프로그램이 응답하지 않습니다. 확장 프로그램을 다시 로드하세요',
-  'detail.mockFail': '가상 오류',
 };
