@@ -139,6 +139,8 @@ export const de: Messages = {
   'builtin.status.unsupported': 'in diesem Browser nicht verfügbar (benötigt Chrome 138+ oder Edge 148+ auf dem Desktop)',
   'builtin.download': 'Modell herunterladen',
   'builtin.downloading': 'Lade herunter: {percent} %',
+  'builtin.autoDownload': 'Übersetzungsmodell automatisch herunterladen',
+  'builtin.autoDownload.hint': 'Der Download startet im Hintergrund, sobald du das nächste Mal auf eine Seite klickst – die erste Übersetzung muss dann nicht warten. Bei getakteter Verbindung lieber ausschalten.',
   'privacy.local': 'Mit der integrierten Chrome-Übersetzung wird der Text auf diesem Gerät verarbeitet und nie an einen Server gesendet.',
   'error.BUILTIN_UNAVAILABLE': 'Die integrierte Chrome-Übersetzung ist hier nicht verfügbar (benötigt Chrome 138+ oder Edge 148+ auf dem Desktop). In den Einstellungen kannst du zu einer KI-API oder DeepL wechseln.',
   'error.BUILTIN_NEEDS_DOWNLOAD': 'Für dieses Sprachpaar muss einmalig ein Modell heruntergeladen werden. Klicke auf „Erneut versuchen“, um zu starten.',

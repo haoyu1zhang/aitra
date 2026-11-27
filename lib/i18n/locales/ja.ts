@@ -139,6 +139,8 @@ export const ja: Messages = {
   'builtin.status.unsupported': 'このブラウザでは使えません（デスクトップ版 Chrome 138 以上か Edge 148 以上が必要）',
   'builtin.download': 'モデルをダウンロード',
   'builtin.downloading': 'ダウンロード中 {percent}%',
+  'builtin.autoDownload': '翻訳モデルを自動でダウンロード',
+  'builtin.autoDownload.hint': '次にページをクリックしたときにバックグラウンドでダウンロードを始めるので、最初の翻訳で待たずに済みます。通信量に制限がある場合はオフにしてください。',
   'privacy.local': 'Chrome 内蔵翻訳では、文字はこの端末の中だけで処理され、サーバーには送信されません。',
   'error.BUILTIN_UNAVAILABLE': 'ここでは Chrome 内蔵翻訳を使えません（デスクトップ版 Chrome 138 以上か Edge 148 以上が必要）。設定で AI API か DeepL に切り替えられます。',
   'error.BUILTIN_NEEDS_DOWNLOAD': 'この言語の組み合わせは最初にモデルのダウンロードが必要です。「再試行」を押すと始まります。',

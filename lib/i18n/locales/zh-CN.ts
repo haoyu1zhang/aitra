@@ -139,6 +139,8 @@ export const zhCN: Messages = {
   'builtin.status.unsupported': '当前浏览器不支持（需要桌面版 Chrome 138 或 Edge 148 以上）',
   'builtin.download': '下载模型',
   'builtin.downloading': '正在下载 {percent}%',
+  'builtin.autoDownload': '自动下载翻译模型',
+  'builtin.autoDownload.hint': '下次你在网页上点击时，会在后台开始下载，第一次翻译就不用等。流量有限的话可以关掉。',
   'privacy.local': '使用 Chrome 内置翻译时，文本只在本机处理，不会发送到任何服务器。',
   'error.BUILTIN_UNAVAILABLE': '当前浏览器无法使用 Chrome 内置翻译（需要桌面版 Chrome 138 或 Edge 148 以上），可以到设置页改用 AI 接口或 DeepL。',
   'error.BUILTIN_NEEDS_DOWNLOAD': '第一次翻译这对语言需要先下载模型，点“重试”开始下载。',

@@ -139,6 +139,8 @@ export const es: Messages = {
   'builtin.status.unsupported': 'no disponible en este navegador (requiere Chrome 138+ o Edge 148+ de escritorio)',
   'builtin.download': 'Descargar modelo',
   'builtin.downloading': 'Descargando {percent} %',
+  'builtin.autoDownload': 'Descargar el modelo de traducción automáticamente',
+  'builtin.autoDownload.hint': 'La descarga empieza en segundo plano la próxima vez que hagas clic en una página, así la primera traducción no tiene que esperar. Desactívalo si tu conexión es de datos limitados.',
   'privacy.local': 'Con la traducción integrada de Chrome, el texto se procesa en este equipo y nunca se envía a un servidor.',
   'error.BUILTIN_UNAVAILABLE': 'La traducción integrada de Chrome no está disponible aquí (requiere Chrome 138+ o Edge 148+ de escritorio). Puedes cambiar a una API de IA o a DeepL en Ajustes.',
   'error.BUILTIN_NEEDS_DOWNLOAD': 'Este par de idiomas necesita descargar un modelo una sola vez. Pulsa Reintentar para empezar.',

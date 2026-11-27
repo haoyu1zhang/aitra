@@ -2,7 +2,7 @@
   "name": "aitra",
   "description": "Select text on any page and translate it with an AI model or DeepL.",
   "private": true,
-  "version": "0.5.0",
+  "version": "0.5.1",
   "type": "module",
   "scripts": {
     "dev": "wxt",

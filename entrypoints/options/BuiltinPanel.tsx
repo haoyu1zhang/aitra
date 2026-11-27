@@ -1,15 +1,18 @@
 import { useCallback, useEffect, useState } from 'react';
 import { builtinStatus, toBuiltinLang, type BuiltinStatus } from '@/lib/builtin/translator';
+import type { Settings } from '@/lib/storage/settings';
 import { languageLabel } from '@/lib/languages';
 import { useI18n } from '@/lib/i18n/react';
-import { Button } from './components';
+import { Button, Toggle } from './components';
 
 /**
  * Shows whether Chrome's on-device translator can handle English → target,
  * and lets the user download the model up front. Downloading needs a click,
  * which is why it lives here and not only behind the first translation.
  */
-export function BuiltinPanel({ targetLang }: { targetLang: string }) {
+export function BuiltinPanel(props: { settings: Settings; onChange: (next: Settings) => void }) {
+  const { settings, onChange } = props;
+  const targetLang = settings.targetLang;
   const { t, tx } = useI18n();
   const [status, setStatus] = useState<BuiltinStatus | null>(null);
   const [progress, setProgress] = useState<number | null>(null);
@@ -49,6 +52,14 @@ export function BuiltinPanel({ targetLang }: { targetLang: string }) {
   return (
     <div className="space-y-3 rounded-lg border border-slate-200 bg-slate-50 p-4">
       <p className="text-xs leading-relaxed text-slate-600">{t('builtin.hint')}</p>
+      <div>
+        <Toggle
+          label={t('builtin.autoDownload')}
+          checked={settings.autoDownload}
+          onChange={(v) => onChange({ ...settings, autoDownload: v })}
+        />
+        <p className="mt-1 text-xs text-slate-500">{t('builtin.autoDownload.hint')}</p>
+      </div>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <span className="text-sm text-slate-700" aria-live="polite">
           {tx('builtin.status', {

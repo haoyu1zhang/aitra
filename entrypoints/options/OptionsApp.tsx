@@ -218,7 +218,7 @@ function OptionsPage(props: {
 
           {settings.provider === 'openai' && <ApiManager settings={settings} onChange={change} />}
 
-          {settings.provider === 'builtin' && <BuiltinPanel targetLang={settings.targetLang} />}
+          {settings.provider === 'builtin' && <BuiltinPanel settings={settings} onChange={change} />}
 
           {settings.provider === 'deepl' && (
             <Field label={t('deepl.key')} htmlFor="deeplKey" hint={t('deepl.key.hint')}>

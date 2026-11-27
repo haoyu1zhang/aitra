@@ -132,3 +132,38 @@ describe('built-in translator downloads', () => {
     expect(seen).toEqual([0.2, 0.5, 0.8]);
   });
 });
+
+describe('preloading the model', () => {
+  beforeEach(() => resetBuiltinCache());
+
+  it('picks English into the target, or the browser language into English', async () => {
+    const { preloadPair } = await import('../lib/builtin/translator');
+    expect(preloadPair('zh-CN', 'it-IT')).toEqual({ sourceLanguage: 'en', targetLanguage: 'zh' });
+    expect(preloadPair('en', 'it-IT')).toEqual({ sourceLanguage: 'it', targetLanguage: 'en' });
+    expect(preloadPair('en', 'en-US')).toBeNull();
+  });
+
+  it('only asks for a gesture when something still has to be downloaded', async () => {
+    const { needsPreload } = await import('../lib/builtin/translator');
+    expect(await needsPreload('zh-CN', fakeApis({ availability: 'available' }).apis)).toBe(false);
+    expect(await needsPreload('zh-CN', fakeApis({ availability: 'downloadable' }).apis)).toBe(true);
+    expect(await needsPreload('zh-CN', {})).toBe(false);
+  });
+
+  it('lets the first translation reuse the preloaded model', async () => {
+    const { preloadBuiltin } = await import('../lib/builtin/translator');
+    const { apis, translator } = fakeApis({ availability: 'downloadable' });
+    await preloadBuiltin('zh-CN', apis);
+    const data = await translateWithBuiltin('hello', settings, { apis });
+    expect(data.translated).toBe('[en>zh] hello');
+    expect(translator.create).toHaveBeenCalledTimes(1);
+  });
+
+  it('forgets a failed preload so a later click can try again', async () => {
+    const { preloadBuiltin } = await import('../lib/builtin/translator');
+    const { apis } = fakeApis({ availability: 'downloadable', createError: 'NotAllowedError' });
+    await preloadBuiltin('zh-CN', apis);
+    await expect(translateWithBuiltin('hello', settings, { apis }))
+      .rejects.toMatchObject({ code: 'BUILTIN_NEEDS_DOWNLOAD' });
+  });
+});

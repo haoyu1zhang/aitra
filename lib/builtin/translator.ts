@@ -193,6 +193,59 @@ export async function translateWithBuiltin(
   };
 }
 
+/**
+ * The language pair worth fetching ahead of time: English into the target,
+ * or, when the target is English, the browser's own language into English.
+ */
+export function preloadPair(targetLang: string, browserLocale = globalThis.navigator?.language): TranslatorLanguages | null {
+  const target = toBuiltinLang(targetLang);
+  if (target !== 'en') return { sourceLanguage: 'en', targetLanguage: target };
+  const source = toBuiltinLang(browserLocale ?? '');
+  return source && source !== 'en' ? { sourceLanguage: source, targetLanguage: 'en' } : null;
+}
+
+/** True when a model still has to be downloaded before the first translation. */
+export async function needsPreload(targetLang: string, apis: BuiltinApis = globals()): Promise<boolean> {
+  const pair = preloadPair(targetLang);
+  if (!apis.translator || !pair) return false;
+  try {
+    const translatorState = await apis.translator.availability(pair);
+    const detectorState = apis.detector ? await apis.detector.availability() : 'unavailable';
+    return translatorState === 'downloadable' || detectorState === 'downloadable';
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Starts the model downloads. Chrome only allows this right after a click or
+ * key press, so call it synchronously from such an event. The translator is
+ * kept, so the first real translation picks it up (and its progress).
+ */
+export function preloadBuiltin(
+  targetLang: string,
+  apis: BuiltinApis = globals(),
+  stallMs = DOWNLOAD_STALL_MS,
+): Promise<void> {
+  const pair = preloadPair(targetLang);
+  if (!apis.translator || !pair) return Promise.resolve();
+  const key = `${pair.sourceLanguage}>${pair.targetLanguage}`;
+  let pending = translators.get(key);
+  if (!pending) {
+    pending = createTranslator(apis.translator, pair, key, stallMs);
+    translators.set(key, pending);
+  }
+  const work: Promise<unknown>[] = [pending.promise];
+  if (apis.detector && !detector) {
+    detector = apis.detector.create();
+    work.push(detector);
+  }
+  return Promise.allSettled(work).then((results) => {
+    if (results[0]?.status === 'rejected') translators.delete(key);
+    if (results[1]?.status === 'rejected') detector = null;
+  });
+}
+
 /** Lets tests start from a clean slate. */
 export function resetBuiltinCache() {
   translators.clear();

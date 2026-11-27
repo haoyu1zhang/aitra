@@ -139,6 +139,8 @@ export const fr: Messages = {
   'builtin.status.unsupported': 'indisponible dans ce navigateur (Chrome 138+ ou Edge 148+ sur ordinateur requis)',
   'builtin.download': 'Télécharger le modèle',
   'builtin.downloading': 'Téléchargement {percent} %',
+  'builtin.autoDownload': 'Télécharger automatiquement le modèle de traduction',
+  'builtin.autoDownload.hint': 'Le téléchargement démarre en arrière-plan au prochain clic sur une page, pour que la première traduction n’ait pas à attendre. Désactivez-le si votre connexion est limitée.',
   'privacy.local': 'Avec la traduction intégrée de Chrome, le texte est traité sur cet appareil et n’est jamais envoyé à un serveur.',
   'error.BUILTIN_UNAVAILABLE': 'La traduction intégrée de Chrome n’est pas disponible ici (Chrome 138+ ou Edge 148+ sur ordinateur requis). Vous pouvez passer à une API d’IA ou à DeepL dans les paramètres.',
   'error.BUILTIN_NEEDS_DOWNLOAD': 'Cette paire de langues nécessite un téléchargement unique du modèle. Cliquez sur Réessayer pour le lancer.',

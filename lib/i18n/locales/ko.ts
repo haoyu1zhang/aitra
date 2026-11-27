@@ -139,6 +139,8 @@ export const ko: Messages = {
   'builtin.status.unsupported': '이 브라우저에서는 사용할 수 없음(데스크톱 Chrome 138 이상 또는 Edge 148 이상 필요)',
   'builtin.download': '모델 다운로드',
   'builtin.downloading': '다운로드 중 {percent}%',
+  'builtin.autoDownload': '번역 모델 자동 다운로드',
+  'builtin.autoDownload.hint': '다음에 페이지를 클릭할 때 백그라운드에서 다운로드를 시작하므로 첫 번역을 기다리지 않아도 됩니다. 데이터 요금이 걱정되면 끄세요.',
   'privacy.local': 'Chrome 내장 번역을 쓰면 텍스트는 이 기기에서만 처리되고 서버로 전송되지 않습니다.',
   'error.BUILTIN_UNAVAILABLE': '여기서는 Chrome 내장 번역을 쓸 수 없습니다(데스크톱 Chrome 138 이상 또는 Edge 148 이상 필요). 설정에서 AI API나 DeepL로 바꿀 수 있습니다.',
   'error.BUILTIN_NEEDS_DOWNLOAD': '이 언어 조합은 처음 한 번 모델을 받아야 합니다. “다시 시도”를 눌러 시작하세요.',

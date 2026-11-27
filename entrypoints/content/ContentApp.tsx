@@ -8,6 +8,7 @@ import type { Translator } from '@/lib/i18n';
 import { triggerMessageSchema, type TranslateData } from '@/lib/messaging/protocol';
 import { requestTranslation } from '@/lib/messaging/translate-client';
 import { requestBuiltinTranslation } from '@/lib/builtin/client';
+import { needsPreload, preloadBuiltin } from '@/lib/builtin/translator';
 import { clampPoint, cornerPoint, isInViewport, placeButton, placeCard, type Point } from '@/lib/dom/position';
 import { boundingRect, checkLength, normalizeText, readSelection, type Rect } from '@/lib/dom/selection';
 import { copyText } from '@/lib/dom/clipboard';
@@ -181,6 +182,38 @@ function SelectionUi(props: { host: HTMLElement; shadow: ShadowRoot; settings: S
       window.removeEventListener('resize', onScrollOrResize);
     };
   }, [host, close]);
+
+  // Built-in model download -----------------------------------------------
+  // Chrome only starts a model download right after a user gesture, so piggyback
+  // on the first click or key press on the page instead of making people go to
+  // the settings page.
+  useEffect(() => {
+    if (settings.provider !== 'builtin' || !settings.autoDownload) return;
+    let cancelled = false;
+    const target = settings.targetLang;
+
+    const start = (e: Event) => {
+      if (!e.isTrusted) return;
+      detach();
+      void preloadBuiltin(target);
+    };
+    const attach = () => {
+      window.addEventListener('click', start, true);
+      window.addEventListener('keyup', start, true);
+    };
+    const detach = () => {
+      window.removeEventListener('click', start, true);
+      window.removeEventListener('keyup', start, true);
+    };
+
+    void needsPreload(target).then((needed) => {
+      if (needed && !cancelled) attach();
+    });
+    return () => {
+      cancelled = true;
+      detach();
+    };
+  }, [settings.provider, settings.autoDownload, settings.targetLang]);
 
   // Shortcut and context menu ----------------------------------------------
   useEffect(() => {

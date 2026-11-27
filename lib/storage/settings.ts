@@ -45,6 +45,8 @@ export const settingsSchema = z.object({
   // Used when the selection is already in the target language.
   fallbackLang: z.enum(LANG_CODES).catch('en'),
   showButton: z.boolean().catch(true),
+  // Fetch Chrome's translation model on the first click, before it's needed.
+  autoDownload: z.boolean().catch(true),
   uiLang: z.enum(UI_LANG_SETTINGS).catch('auto'),
   apis: apisSchema,
   activeApiId: z.string().nullable().catch(null),
@@ -58,6 +60,7 @@ export const DEFAULT_SETTINGS: Settings = {
   targetLang: 'zh-CN',
   fallbackLang: 'en',
   showButton: true,
+  autoDownload: true,
   uiLang: 'auto',
   apis: [],
   activeApiId: null,

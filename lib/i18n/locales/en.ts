@@ -137,6 +137,8 @@ export const en = {
   'builtin.status.unsupported': 'not available in this browser (needs desktop Chrome 138+ or Edge 148+)',
   'builtin.download': 'Download model',
   'builtin.downloading': 'Downloading {percent}%',
+  'builtin.autoDownload': 'Download the translation model automatically',
+  'builtin.autoDownload.hint': 'The download starts in the background the next time you click on a page, so the first translation doesn\'t have to wait. Turn this off on a metered connection.',
   'privacy.local': 'With Chrome built-in translation, text is processed on this device and never sent to a server.',
   'error.BUILTIN_UNAVAILABLE': 'Chrome\'s built-in translation isn\'t available here (it needs desktop Chrome 138+ or Edge 148+). You can switch to an AI API or DeepL in Settings.',
   'error.BUILTIN_NEEDS_DOWNLOAD': 'This language pair needs a one-time model download. Click Retry to start it.',
