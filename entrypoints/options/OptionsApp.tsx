@@ -6,7 +6,6 @@ import {
   activeApi,
   getSettings,
   isConfigured,
-  providerLabel,
   saveSettings,
   type ProviderId,
   type Settings,
@@ -17,9 +16,14 @@ import { I18nProvider, useI18n } from '@/lib/i18n/react';
 import { requestEndpointPermission } from '@/lib/permissions';
 import { sendRuntime } from '@/lib/messaging/client';
 import { ApiManager, SecretInput } from './ApiManager';
+import { BuiltinPanel } from './BuiltinPanel';
+import { translateWithBuiltin } from '@/lib/builtin/translator';
+import { normalizeError } from '@/lib/errors';
+import { serviceName as nameOf } from '@/lib/service-name';
 import { Button, Field, NoticeLine, Section, Toggle, inputClass, type Notice } from './components';
 
 const PROVIDERS: { id: ProviderId; title: MessageKey; desc: MessageKey }[] = [
+  { id: 'builtin', title: 'provider.builtin.title', desc: 'provider.builtin.desc' },
   { id: 'openai', title: 'provider.openai.title', desc: 'provider.openai.desc' },
   { id: 'deepl', title: 'provider.deepl.title', desc: 'provider.deepl.desc' },
 ];
@@ -87,6 +91,16 @@ function OptionsPage(props: {
 
   const runTest = () => {
     const snapshot = settings;
+    // The built-in translator only exists in pages, so test it right here.
+    if (snapshot.provider === 'builtin') {
+      setTesting(true);
+      setTestNotice({ tone: 'info', text: t('test.running') });
+      void translateWithBuiltin('The weather is nice today, so we are going for a walk.', snapshot)
+        .then((data) => setTestNotice({ tone: 'success', text: t('test.ok', { ms: data.elapsedMs }) }))
+        .catch((err: unknown) => setTestNotice({ tone: 'error', text: describeError(t, normalizeError(err).toInfo()) }))
+        .finally(() => setTesting(false));
+      return;
+    }
     const api = snapshot.provider === 'openai' ? activeApi(snapshot) : null;
     // Resolves right away when the origin is built in or already granted.
     const grantFirst = api ? requestEndpointPermission(api.baseUrl) : Promise.resolve(true);
@@ -115,7 +129,7 @@ function OptionsPage(props: {
     void browser.tabs.create({ url: 'chrome://extensions/shortcuts' });
   };
 
-  const serviceName = providerLabel(settings) || t('provider.none');
+  const serviceName = nameOf(settings, t);
 
   return (
     <div className="mx-auto max-w-2xl px-5 py-10">
@@ -181,7 +195,7 @@ function OptionsPage(props: {
         </Section>
 
         <Section title={t('section.service')}>
-          <div className="grid gap-3 sm:grid-cols-2" role="radiogroup">
+          <div className="grid gap-3 sm:grid-cols-3" role="radiogroup">
             {PROVIDERS.map((p) => {
               const active = settings.provider === p.id;
               return (
@@ -203,6 +217,8 @@ function OptionsPage(props: {
           </div>
 
           {settings.provider === 'openai' && <ApiManager settings={settings} onChange={change} />}
+
+          {settings.provider === 'builtin' && <BuiltinPanel targetLang={settings.targetLang} />}
 
           {settings.provider === 'deepl' && (
             <Field label={t('deepl.key')} htmlFor="deeplKey" hint={t('deepl.key.hint')}>
@@ -232,7 +248,9 @@ function OptionsPage(props: {
           <NoticeLine notice={testNotice} />
 
           <p className="rounded-lg bg-slate-50 px-3 py-2 text-xs leading-relaxed text-slate-600">
-            {tx('privacy.sentTo', { name: <strong>{serviceName}</strong> })}
+            {settings.provider === 'builtin'
+              ? t('privacy.local')
+              : tx('privacy.sentTo', { name: <strong>{serviceName}</strong> })}
           </p>
         </Section>
 

@@ -3,7 +3,7 @@ import { browser } from 'wxt/browser';
 import { LANG_CODES } from '../languages';
 import { UI_LANG_SETTINGS } from '../i18n';
 
-export const PROVIDER_IDS = ['openai', 'deepl'] as const;
+export const PROVIDER_IDS = ['builtin', 'openai', 'deepl'] as const;
 export type ProviderId = (typeof PROVIDER_IDS)[number];
 
 /** Starting points for the "add API" form. */
@@ -39,8 +39,8 @@ const apisSchema = z
   );
 
 export const settingsSchema = z.object({
-  // Older versions had a 'mock' provider; anything unknown lands on the AI API.
-  provider: z.enum(PROVIDER_IDS).catch('openai'),
+  // Older versions had a 'mock' provider; anything unknown lands on the free built-in one.
+  provider: z.enum(PROVIDER_IDS).catch('builtin'),
   targetLang: z.enum(LANG_CODES).catch('zh-CN'),
   // Used when the selection is already in the target language.
   fallbackLang: z.enum(LANG_CODES).catch('en'),
@@ -54,7 +54,7 @@ export const settingsSchema = z.object({
 export type Settings = z.infer<typeof settingsSchema>;
 
 export const DEFAULT_SETTINGS: Settings = {
-  provider: 'openai',
+  provider: 'builtin',
   targetLang: 'zh-CN',
   fallbackLang: 'en',
   showButton: true,
@@ -125,6 +125,8 @@ export function watchSettings(callback: (settings: Settings) => void): () => voi
 
 /** True once the selected service has what it needs to make a request. */
 export function isConfigured(settings: Settings): boolean {
+  // Whether the browser can actually run it is checked when translating.
+  if (settings.provider === 'builtin') return true;
   if (settings.provider === 'deepl') return settings.deepl.apiKey.length > 0;
   const api = activeApi(settings);
   return Boolean(api && api.apiKey && api.model && endpointOrigin(api.baseUrl));
@@ -155,6 +157,8 @@ export function providerCacheKey(settings: Settings): string {
     }
     case 'deepl':
       return 'deepl';
+    case 'builtin':
+      return 'builtin';
   }
 }
 
@@ -167,6 +171,9 @@ export function providerLabel(settings: Settings): string {
   switch (settings.provider) {
     case 'deepl':
       return 'DeepL';
+    // Shown with a translated name by the UI.
+    case 'builtin':
+      return '';
     case 'openai': {
       const api = activeApi(settings);
       return api ? apiLabel(api) : '';

@@ -17,7 +17,7 @@ describe('translateText', () => {
   beforeEach(() => fakeBrowser.reset());
 
   it('refuses to run without a configured service', async () => {
-    await expect(translateText('hello', DEFAULT_SETTINGS, { signal: signal() }))
+    await expect(translateText('hello', { ...DEFAULT_SETTINGS, provider: 'openai' }, { signal: signal() }))
       .rejects.toMatchObject({ code: 'NOT_CONFIGURED' });
   });
 

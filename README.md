@@ -4,7 +4,7 @@
 
 Aitra 是一个 Chrome / Edge 划词翻译扩展。在网页上选中一段文字，旁边会出现一个小按钮，点一下就在选区附近弹出原文和译文。也可以按 `Alt+T`，或者用右键菜单里的“翻译选中内容”。它不会改动页面本身的内容和排版。
 
-翻译服务可以用 DeepSeek、OpenAI 或其他 OpenAI 兼容接口，也可以用 DeepL。扩展本身不带翻译服务，需要填你自己的 API Key：装好后会自动打开设置页，没配置时划词也会提示去设置。
+默认使用 Chrome 自带的翻译模型，在本机翻译，免费、不需要任何 Key，文本也不会离开电脑。想要更好的译文，可以在设置里换成 DeepSeek、OpenAI 等 OpenAI 兼容接口，或者 DeepL，用你自己的 API Key。
 
 ![翻译卡片](docs/screenshots/card.png)
 
@@ -68,6 +68,16 @@ npm run build:demo  # 生成单文件网页演示 .output/demo/index.html
 
 ![设置页](docs/screenshots/options.png)
 
+### Chrome 内置翻译（默认）
+
+用的是 Chrome 的 [Translator API](https://developer.chrome.com/docs/ai/translator-api)，翻译模型在本机运行，不用申请 Key，也没有费用。需要桌面版 Chrome 138 或 Edge 148 以上，手机和其他浏览器不支持。
+
+- 每对语言第一次使用时要下载一次模型，下载需要用户点击触发，所以第一次请用浮动按钮或卡片上的“重试”，快捷键不行。也可以在设置页提前点“下载模型”。
+- 源语言先按文字类型判断（中日韩、俄文），拉丁字母的语言再交给 Chrome 的 Language Detector，判断不了就当作英文。
+- 这个接口只存在于网页里，Service Worker 里没有，所以内置翻译直接在内容脚本中进行，不经过后台，也不进缓存（本地翻译本来就很快）。
+- Chrome 在模型下载卡住时不会报错，只会一直等。扩展会在 20 秒没有任何下载进度时放弃，提示检查网络，避免卡片一直转圈。
+- 译文质量不如大模型，更在意质量的话可以换成下面的 AI 接口。
+
 ### AI 接口（DeepSeek / OpenAI / 兼容接口）
 
 1. 设置页选“AI 接口”，点“+ 添加接口”
@@ -105,7 +115,7 @@ npm run build:demo  # 生成单文件网页演示 .output/demo/index.html
 
 ## 隐私
 
-- 扩展不带内置的翻译服务，也没有自己的服务器。没有配置接口时不会发出任何翻译请求。
+- 扩展没有自己的服务器。默认的 Chrome 内置翻译在本机完成，不会发出任何网络请求。
 - **翻译时，你选中的文本会发送给你配置的翻译服务**（DeepSeek、OpenAI、DeepL 或你填的自定义接口）。设置页和卡片底部都会显示当前用的是哪个服务。这些服务怎么处理数据，以它们各自的隐私政策为准。
 - API Key 只保存在本机浏览器的 `chrome.storage.local` 里，不会同步，也不会发给除对应服务以外的任何地方。
 - 扩展不收集使用数据，没有统计和埋点。出错时控制台只记录错误类型和文本长度，不记录选中的内容和 Key。服务方返回的错误信息里如果出现类似 Key 的字符串，会先打码再显示。
@@ -123,6 +133,7 @@ entrypoints/
   options/             设置页
   popup/               工具栏弹窗
 lib/
+  builtin/             Chrome 内置翻译（在页面里运行）
   providers/           OpenAI 兼容 / DeepL，统一实现 translate(text, options)
   translation/         缓存 → 调用 → 超时 → 重试的流程
   storage/             设置（Zod 校验）和缓存
@@ -134,7 +145,7 @@ tests/                 Vitest 单元测试
 
 几个设计上的取舍：
 
-- **content script 不直接请求翻译接口。** 所有请求都在 background 里发，Key 不会进入网页所在的进程，CORS 也由 host_permissions 统一处理。
+- **content script 不直接请求翻译接口。** 所有网络请求都在 background 里发，Key 不会进入网页所在的进程，CORS 也由 host_permissions 统一处理。唯一的例外是 Chrome 内置翻译：它不联网，而且这个接口在 Service Worker 里不存在，只能在页面里调用。
 - **翻译走 `runtime.connect` 长连接，而不是 `sendMessage`。** 这样能把流式输出一段一段推给页面；卡片关闭时断开连接，后台随之取消请求。
 - **外部数据都先解析再用。** 存储里的设置、接口返回的 JSON、SSE 的每一块、页面和后台之间的消息，都用 Zod 校验，不合法的直接丢弃或报错。
 - **译文只以文本节点的形式插入。** React 渲染文本时不会解析 HTML，不存在把接口返回内容当作 HTML 执行的风险。
@@ -147,6 +158,8 @@ tests/                 Vitest 单元测试
 扩展管理页里显示的扩展描述和快捷键说明来自 `public/_locales/`，由 Chrome 按浏览器语言选择，不受设置页里的界面语言影响。
 
 ## 已知问题
+
+- Chrome 内置翻译每对语言第一次要下载模型，按快捷键触发时 Chrome 不允许下载，需要点一下按钮。它的语言覆盖和译文质量也不如大模型。
 
 - 除中文和英文外，其他语言的界面文案还没有经过母语者校对。
 

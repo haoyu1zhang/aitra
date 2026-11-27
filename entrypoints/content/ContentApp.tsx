@@ -7,6 +7,7 @@ import { languageLabel } from '@/lib/languages';
 import type { Translator } from '@/lib/i18n';
 import { triggerMessageSchema, type TranslateData } from '@/lib/messaging/protocol';
 import { requestTranslation } from '@/lib/messaging/translate-client';
+import { requestBuiltinTranslation } from '@/lib/builtin/client';
 import { clampPoint, cornerPoint, isInViewport, placeButton, placeCard, type Point } from '@/lib/dom/position';
 import { boundingRect, checkLength, normalizeText, readSelection, type Rect } from '@/lib/dom/selection';
 import { copyText } from '@/lib/dom/clipboard';
@@ -25,6 +26,8 @@ type View =
       translated: string;
       data?: TranslateData;
       error?: TranslateErrorInfo;
+      /** Fraction of a built-in language model downloaded so far. */
+      download?: number;
     };
 
 const BUTTON_SIZE = { width: 28, height: 28 };
@@ -79,11 +82,18 @@ function SelectionUi(props: { host: HTMLElement; shadow: ShadowRoot; settings: S
       setView((prev) => (prev.kind === 'card' ? fn(prev) : prev));
     };
 
-    cancelRef.current = requestTranslation(text, {
-      onChunk: (full) => update((v) => ({ ...v, phase: 'streaming', translated: full })),
-      onDone: (data) => update((v) => ({ ...v, phase: 'done', translated: data.translated, data })),
-      onError: (error) => update((v) => ({ ...v, phase: 'error', error })),
-    });
+    const handlers = {
+      onChunk: (full: string) => update((v) => ({ ...v, phase: 'streaming', translated: full })),
+      onDone: (data: TranslateData) =>
+        update((v) => ({ ...v, phase: 'done', translated: data.translated, data, download: undefined })),
+      onError: (error: TranslateErrorInfo) => update((v) => ({ ...v, phase: 'error', error, download: undefined })),
+      onDownload: (fraction: number) => update((v) => ({ ...v, download: fraction })),
+    };
+
+    // The built-in translator runs right here; everything else goes through the background.
+    cancelRef.current = settingsRef.current.provider === 'builtin'
+      ? requestBuiltinTranslation(text, settingsRef.current, handlers)
+      : requestTranslation(text, handlers);
   }, []);
 
   const showError = useCallback((text: string, code: TranslateErrorInfo['code']) => {
@@ -382,6 +392,11 @@ function Card(props: {
         </p>
 
         <div className="mt-2">
+          {view.phase === 'loading' && view.download !== undefined && (
+            <p className="m-0 text-xs text-slate-500" aria-live="polite">
+              {t('card.downloading', { percent: Math.round(view.download * 100) })}
+            </p>
+          )}
           {view.phase === 'loading' && (
             <div className="space-y-2 py-1" aria-label={t('card.loading')}>
               <div className="aitra-skeleton h-3.5 w-11/12 rounded-md" />
@@ -405,7 +420,7 @@ function Card(props: {
 
       <div className="flex items-center justify-between border-t border-slate-100 px-3 py-1.5">
         <span className="truncate text-[11px] text-slate-400">
-          {view.data ? `${view.data.provider} · ${timing(view.data, t)}` : busy ? t('card.loading') : ''}
+          {view.data ? `${providerName(view.data, t)} · ${timing(view.data, t)}` : busy ? t('card.loading') : ''}
         </span>
         <div className="flex shrink-0 gap-1">
           {view.phase === 'error' && view.error && SETTINGS_ERRORS.has(view.error.code) && (
@@ -421,6 +436,10 @@ function Card(props: {
       </div>
     </div>
   );
+}
+
+function providerName(data: TranslateData, t: Translator): string {
+  return data.provider === 'builtin' ? t('provider.builtin.title') : data.provider;
 }
 
 function timing(data: TranslateData, t: Translator): string {

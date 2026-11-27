@@ -5,15 +5,16 @@ import {
   apiLabel,
   getSettings,
   isConfigured,
-  providerLabel,
   updateSettings,
   type ProviderId,
   type Settings,
 } from '@/lib/storage/settings';
 import type { MessageKey } from '@/lib/i18n';
 import { I18nProvider, useI18n } from '@/lib/i18n/react';
+import { serviceName } from '@/lib/service-name';
 
 const PROVIDER_OPTIONS: { id: ProviderId; label: MessageKey }[] = [
+  { id: 'builtin', label: 'provider.builtin.short' },
   { id: 'openai', label: 'provider.openai.title' },
   { id: 'deepl', label: 'provider.deepl.title' },
 ];
@@ -37,7 +38,7 @@ export function PopupApp() {
 function Popup({ settings, onChange }: { settings: Settings; onChange: (s: Settings) => void }) {
   const { t, lang } = useI18n();
   const patch = async (p: Partial<Settings>) => onChange(await updateSettings(p));
-  const current = providerLabel(settings) || t('provider.none');
+  const current = serviceName(settings, t);
 
   useEffect(() => {
     document.documentElement.lang = lang;
@@ -71,7 +72,7 @@ function Popup({ settings, onChange }: { settings: Settings; onChange: (s: Setti
 
       <div>
         <span className="text-xs text-slate-500">{t('popup.service')}</span>
-        <div className="mt-1 grid grid-cols-2 gap-1 rounded-md bg-slate-100 p-1">
+        <div className="mt-1 grid grid-cols-3 gap-1 rounded-md bg-slate-100 p-1">
           {PROVIDER_OPTIONS.map((p) => (
             <button
               key={p.id}

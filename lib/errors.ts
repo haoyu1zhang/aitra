@@ -2,6 +2,9 @@ import { translate, type MessageKey, type Translator } from './i18n';
 
 export const ERROR_CODES = [
   'NOT_CONFIGURED',
+  'BUILTIN_UNAVAILABLE',
+  'BUILTIN_NEEDS_DOWNLOAD',
+  'MODEL_DOWNLOAD_FAILED',
   'NO_API_KEY',
   'INVALID_KEY',
   'RATE_LIMITED',
@@ -34,6 +37,7 @@ export interface TranslateErrorInfo {
 export type DetailKey = Extract<MessageKey, `detail.${string}`>;
 
 const RETRYABLE: ReadonlySet<ErrorCode> = new Set([
+  'MODEL_DOWNLOAD_FAILED',
   'RATE_LIMITED',
   'TIMEOUT',
   'NETWORK',
@@ -66,6 +70,7 @@ export class TranslateError extends Error {
 /** Errors the user fixes on the settings page; the card offers a link there. */
 export const SETTINGS_ERRORS: ReadonlySet<ErrorCode> = new Set([
   'NOT_CONFIGURED',
+  'BUILTIN_UNAVAILABLE',
   'NO_API_KEY',
   'INVALID_KEY',
   'QUOTA_EXCEEDED',

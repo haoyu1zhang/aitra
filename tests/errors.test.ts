@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { TranslateError, describeError, errorFromStatus, normalizeError } from '../lib/errors';
+import { SETTINGS_ERRORS, TranslateError, describeError, errorFromStatus, normalizeError } from '../lib/errors';
 import { createTranslator } from '../lib/i18n';
 import { redact } from '../lib/providers/http';
 
@@ -42,5 +42,13 @@ describe('errors', () => {
   it('redacts things that look like keys', () => {
     expect(redact('Incorrect API key provided: sk-abc123def456')).not.toContain('abc123');
     expect(redact('key 0d2f0d8e-1111-2222-3333-444455556666:fx bad')).toBe('key *** bad');
+  });
+
+  it('only links to settings for problems fixed there', () => {
+    expect(SETTINGS_ERRORS.has('NOT_CONFIGURED')).toBe(true);
+    expect(SETTINGS_ERRORS.has('BUILTIN_UNAVAILABLE')).toBe(true);
+    expect(SETTINGS_ERRORS.has('MODEL_DOWNLOAD_FAILED')).toBe(false);
+    expect(SETTINGS_ERRORS.has('BUILTIN_NEEDS_DOWNLOAD')).toBe(false);
+    expect(new TranslateError('MODEL_DOWNLOAD_FAILED').retryable).toBe(true);
   });
 });

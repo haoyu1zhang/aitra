@@ -14,5 +14,8 @@ export function createProvider(settings: Settings): TranslationProvider {
     }
     case 'deepl':
       return new DeepLProvider(settings.deepl.apiKey);
+    // Runs in the page, never in the service worker. See lib/builtin.
+    case 'builtin':
+      throw new TranslateError('BUILTIN_UNAVAILABLE', { key: 'detail.builtinUnsupported' });
   }
 }

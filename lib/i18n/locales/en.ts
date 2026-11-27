@@ -4,7 +4,7 @@ export const en = {
   'app.saved': 'Saved',
 
   'setup.title': 'Set up a translation API to get started',
-  'setup.body': 'Aitra doesn\'t come with a translation service of its own. Add an AI API (DeepSeek, OpenAI or any compatible one) or a DeepL key below. Your key stays in this browser, and selected text is sent only to the service you pick.',
+  'setup.body': 'The selected service isn\'t set up yet. Add an AI API (DeepSeek, OpenAI or any compatible one) or a DeepL key below, or switch back to the free Chrome built-in translation. Keys stay in this browser, and selected text is sent only to the service you pick.',
 
   'section.translation': 'Translation',
   'section.service': 'Translation service',
@@ -100,7 +100,7 @@ export const en = {
   'card.copied': 'Copied',
   'card.timing': 'first {first} ms · total {total} ms',
 
-  'error.NOT_CONFIGURED': 'No translation API is set up yet. Aitra uses your own API key, so add one in Settings first.',
+  'error.NOT_CONFIGURED': 'The selected translation service isn\'t set up yet. Add an API key in Settings, or switch to the free Chrome built-in translation.',
   'error.NO_API_KEY': 'No API key yet. Add one in Settings.',
   'error.INVALID_KEY': "The API key is invalid or doesn't have access. Check your settings.",
   'error.RATE_LIMITED': 'Too many requests. The service is rate limiting, try again shortly.',
@@ -125,6 +125,25 @@ export const en = {
   'detail.reloadPage': 'the extension was updated, reload the page',
   'detail.portClosed': 'lost the connection to the extension, try again',
   'detail.noBackground': "the extension background didn't respond, reload the extension",
+  'provider.builtin.title': 'Chrome built-in',
+  'provider.builtin.desc': 'Free and on-device. No key needed.',
+  'provider.builtin.short': 'Built-in',
+  'builtin.hint': 'Runs on Chrome\'s own translation model, so the text never leaves your computer. Quality is a step below large language models; switch to an AI API for better results.',
+  'builtin.status': '{from} → {to}: {status}',
+  'builtin.status.available': 'ready',
+  'builtin.status.downloadable': 'model not downloaded yet',
+  'builtin.status.downloading': 'downloading',
+  'builtin.status.unavailable': 'this language pair is not supported',
+  'builtin.status.unsupported': 'not available in this browser (needs desktop Chrome 138+ or Edge 148+)',
+  'builtin.download': 'Download model',
+  'builtin.downloading': 'Downloading {percent}%',
+  'privacy.local': 'With Chrome built-in translation, text is processed on this device and never sent to a server.',
+  'error.BUILTIN_UNAVAILABLE': 'Chrome\'s built-in translation isn\'t available here (it needs desktop Chrome 138+ or Edge 148+). You can switch to an AI API or DeepL in Settings.',
+  'error.BUILTIN_NEEDS_DOWNLOAD': 'This language pair needs a one-time model download. Click Retry to start it.',
+  'error.MODEL_DOWNLOAD_FAILED': 'The translation model couldn\'t be downloaded (no progress for a while). Check your network and try again.',
+  'detail.builtinUnsupported': 'not supported by this browser',
+  'detail.builtinPair': 'language pair not supported',
+  'card.downloading': 'Downloading the translation model… {percent}%',
 } as const;
 
 export type MessageKey = keyof typeof en;
